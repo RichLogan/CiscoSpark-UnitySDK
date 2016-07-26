@@ -105,13 +105,15 @@ namespace Cisco.Spark {
 		}
 
 		/// <summary>
-		/// Lists the rooms gv
+		/// Lists the rooms matching the given filters you are a member of
 		/// </summary>
 		/// <returns>List of rooms</returns>
 		/// <param name="teamId">Show rooms belonging to a specific team</param>
 		/// <param name="max">Maximum number of rooms to return</param>
 		/// <param name="type">Type of room to search for</param>
-		public static IEnumerator ListRooms(string teamId, int max, string type) {
+		/// <param name="callback">List of rooms</param>
+		public static IEnumerator ListRooms(string teamId, int max, string type, Action<List<Room>> callback) {
+			// Build Request
 			Request manager = GameObject.FindObjectOfType<Request> ();
 			Dictionary<string, string> data = new Dictionary<string, string> ();
 			data ["teamId"] = teamId;
@@ -119,11 +121,20 @@ namespace Cisco.Spark {
 			data ["type"] = type;
 			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
 			using (UnityWebRequest www = manager.Generate ("rooms?" + queryString, UnityWebRequest.kHttpVerbGET)) {
-				Debug.Log (www.url);
 				yield return www.Send ();
-				// TODO: Finish
 				if (www.error != null) {
 					Debug.LogError ("Failed to List Rooms");
+				} else {
+					// Convert to Room objects
+					List<Room> rooms = new List<Room> ();
+					Dictionary<string, object> json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					List<object> items = json ["items"] as List<object>;
+					foreach (Dictionary<string, object> room_json in items) {
+						// TODO: Do I need to reconvert this?
+						string reJsoned = Json.Serialize (room_json);
+						rooms.Add(new Room (reJsoned));
+					}
+					callback (rooms);
 				}
 			}
 		} 
