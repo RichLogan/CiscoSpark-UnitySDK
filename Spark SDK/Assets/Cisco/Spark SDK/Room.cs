@@ -137,6 +137,24 @@ namespace Cisco.Spark {
 					callback (rooms);
 				}
 			}
-		} 
+		}
+
+		/// <summary>
+		/// Gets the room details.
+		/// </summary>
+		/// <returns>The Room object</returns>
+		/// <param name="roomId">Room identifier</param>
+		/// <param name="callback">Callback.</param>
+		public static IEnumerator GetRoomDetails(string roomId, Action<Room> callback) {
+			Request manager = GameObject.FindObjectOfType<Request> ();
+			using (UnityWebRequest www = manager.Generate ("rooms/" + roomId, UnityWebRequest.kHttpVerbGET)) {
+				yield return www.Send ();
+				if (www.error != null) {
+					Debug.LogError ("Failed to Retrieve Room");
+				} else {
+					callback(new Room(www.downloadHandler.text));
+				}
+			}
+		}
 	}
 }
