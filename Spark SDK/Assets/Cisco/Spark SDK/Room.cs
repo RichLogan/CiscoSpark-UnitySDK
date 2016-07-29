@@ -112,13 +112,23 @@ namespace Cisco.Spark {
 		/// <param name="max">Maximum number of rooms to return</param>
 		/// <param name="type">Type of room to search for</param>
 		/// <param name="callback">List of rooms</param>
-		public static IEnumerator ListRooms(string teamId, int max, string type, Action<List<Room>> callback) {
+		public static IEnumerator ListRooms(Action<List<Room>> callback, string teamId = null, int max = 0, string type = null) {
 			// Build Request
 			Request manager = GameObject.FindObjectOfType<Request> ();
 			Dictionary<string, string> data = new Dictionary<string, string> ();
-			data ["teamId"] = teamId;
-			data ["max"] = max.ToString ();
-			data ["type"] = type;
+
+			// Handle optional arguments
+			if (teamId != null) {
+				data ["teamId"] = teamId;
+			}
+			if (max != 0) {
+				data ["max"] = max.ToString ();	
+			}
+			if (type != null) {
+				data ["type"] = type;	
+			}
+
+			// Make Request
 			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
 			using (UnityWebRequest www = manager.Generate ("rooms?" + queryString, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
