@@ -38,26 +38,36 @@ public class TestRoom : MonoBehaviour {
 						Debug.Log("Update Room Passed!");
 					}
 
-					// Delete Room
-					StartCoroutine (testRoom.Delete ());
-					Thread.Sleep (1000); // Wait for Delete to finish
-					startRoomCount--;
-					StartCoroutine (Room.ListRooms (postDeleteRooms => {
-						if (startRoomCount != postDeleteRooms.Count) {
-							Debug.LogError("Delete Room Failed!");
-							errorCount++;
+					// Get Room Details
+					StartCoroutine (Room.GetRoomDetails (testRoom.Id, retrivedRoom => {
+						testRoom = retrivedRoom;
+						if (testRoom.Title != "Updated Test Room (CiscoSpark-UnitySDK)") {
+							Debug.LogError ("GetRoomDetails Failed!");
 						} else {
-							Debug.Log("Delete Room Passed!");
+							Debug.Log("GetRoomDetails Passed!");
 						}
 
+						// Delete Room
+						StartCoroutine (testRoom.Delete ());
+						Thread.Sleep (1000); // Wait for Delete to finish
+						startRoomCount--;
+						StartCoroutine (Room.ListRooms (postDeleteRooms => {
+							if (startRoomCount != postDeleteRooms.Count) {
+								Debug.LogError("Delete Room Failed!");
+								errorCount++;
+							} else {
+								Debug.Log("Delete Room Passed!");
+								Debug.Log("ListRooms Passed!");
+							}
 
-						// Finish and Report
-						Debug.Log ("Finished Running Room Tests");
-						if (errorCount == 0) {
-							Debug.Log("All tests passed!");
-						} else {
-							Debug.LogError (errorCount + " tests failed!");
-						}
+							// Finish and Report
+							Debug.Log ("Finished Running Room Tests");
+							if (errorCount == 0) {
+								Debug.Log("All tests passed!");
+							} else {
+								Debug.LogError (errorCount + " tests failed!");
+							}
+						}));
 					}));
 				}));
 			}));
