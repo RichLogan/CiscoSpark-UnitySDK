@@ -16,10 +16,10 @@ public class TestRoom : MonoBehaviour {
 			int startRoomCount = rooms.Count;
 
 			// Create New Room
-			Room testRoom = new Room("Test Room", null);
+			Room testRoom = new Room("Test Room (CiscoSpark-UnitySDK)", null);
 			StartCoroutine(testRoom.Commit (room => {
 				testRoom = room;
-				if (testRoom.Title != "Test Room") {
+				if (testRoom.Title != "Test Room (CiscoSpark-UnitySDK)") {
 					Debug.LogError("Create Room Failed!");
 					errorCount++;
 				} else {
@@ -28,10 +28,10 @@ public class TestRoom : MonoBehaviour {
 				}
 
 				// Edit Room
-				testRoom.Title = "Updated Test Room";
+				testRoom.Title = "Updated Test Room (CiscoSpark-UnitySDK)";
 				StartCoroutine (testRoom.Commit(updatedRoom => {
 					testRoom = updatedRoom;
-					if (testRoom.Title != "Updated Test Room") {
+					if (testRoom.Title != "Updated Test Room (CiscoSpark-UnitySDK)") {
 						Debug.LogError ("Update Room Failed!");
 						errorCount++;
 					} else {
