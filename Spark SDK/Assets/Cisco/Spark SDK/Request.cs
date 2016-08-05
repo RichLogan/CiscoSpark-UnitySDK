@@ -3,7 +3,7 @@ using UnityEngine.Networking;
 
 public class Request : MonoBehaviour {
 	// Publically Set Variables
-	public string BaseUrl = "https://api.ciscospark.com/v1";
+	public const string BaseUrl = "https://api.ciscospark.com/v1";
 	public string AuthenticationToken = "";
 
 	public UnityWebRequest Generate(string Resource, string RequestType) {
