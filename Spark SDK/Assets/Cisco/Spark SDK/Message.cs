@@ -14,7 +14,7 @@ namespace Cisco.Spark {
 		public string Text { get; set;}
 		public string Markdown { get; set;}
 		public string Html { get; set;}
-		public Uri[] Files { get; set;}
+		public List<SparkFile> Files { get; set;}
 		public string PersonId { get; set;}
 		public string PersonEmail { get; set;}
 		public string Created { get; set;}
@@ -54,7 +54,17 @@ namespace Cisco.Spark {
 				Html = html as string;
 			}
 
-			Files = null;
+			object files;
+			if (data.TryGetValue ("files", out files)) {
+				Files = new List<SparkFile> ();
+				List<object> listOfFiles = files as List<object>;
+				foreach (object toString in listOfFiles) {
+					string url = toString as string;
+					string fileId = url.Substring (url.LastIndexOf ('/') + 1);
+					Files.Add (new SparkFile(fileId));
+				}
+			}
+
 			PersonId = data ["personId"] as string;
 			PersonEmail = data ["personEmail"] as string;
 		}
@@ -122,6 +132,27 @@ namespace Cisco.Spark {
 			}
 		}
 
+		/// <summary>
+		/// Delete this Message on Spark.
+		/// </summary>
+		public IEnumerator Delete() {
+			if (Id != null) {
+				Request manager = GameObject.FindObjectOfType<Request> ();
+				using (UnityWebRequest www = manager.Generate ("messages/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
+					yield return www.Send ();
+					if (www.error != null) {
+						Debug.LogError ("Failed to Delete Message: " + www.error);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets the message details.
+		/// </summary>
+		/// <returns>The Message object</returns>
+		/// <param name="messageId">Message identifier.</param>
+		/// <param name="callback">The message object</param>
 		public static IEnumerator GetMessageDetails(string messageId, Action<Message> callback) {
 			Request manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("messages/" + messageId, UnityWebRequest.kHttpVerbGET)) {
@@ -134,7 +165,16 @@ namespace Cisco.Spark {
 			}
 		}
 
-		public static IEnumerator ListMessages(Action<List<Message>> callback, string roomId, string before = null, string beforeMessage = null, int max = 0) {
+		/// <summary>
+		/// Lists the messages.
+		/// </summary>
+		/// <returns>The messages.</returns>
+		/// <param name="roomId">Room identifier.</param>
+		/// <param name="callback">The list of Messages</param>
+		/// <param name="before">Before</param>
+		/// <param name="beforeMessage">Before message.</param>
+		/// <param name="max">Max number of messages to recieve</param>
+		public static IEnumerator ListMessages(string roomId, Action<List<Message>> callback, string before = null, string beforeMessage = null, int max = 0) {
 			Request manager = GameObject.FindObjectOfType<Request> ();
 			Dictionary<string, string> data = new Dictionary<string, string> ();
 			data ["roomId"] = roomId;
@@ -159,12 +199,16 @@ namespace Cisco.Spark {
 				} else {
 					List<Message> messages = new List<Message> ();
 					Dictionary<string, object> json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					List<object> items = json ["items"] as List<object>;
-					foreach (Dictionary<string, object> message_json in items) {
-						string reJsoned = Json.Serialize (message_json);
-						messages.Add (new Message (reJsoned));
+					try {
+						List<object> items = json ["items"] as List<object>;
+						foreach (Dictionary<string, object> message_json in items) {
+							string reJsoned = Json.Serialize (message_json);
+							messages.Add (new Message (reJsoned));
+						}
+						callback (messages);
+					} catch (KeyNotFoundException) {
+						Debug.LogError (www.downloadHandler.text);
 					}
-					callback (messages);
 				}
 			}
 		}
