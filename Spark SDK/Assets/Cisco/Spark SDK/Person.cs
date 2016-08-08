@@ -28,11 +28,22 @@ namespace Cisco.Spark {
 			Avatar = avatar;
 		}
 
+		public IEnumerator DownloadAvatar(Action<Texture> callback) {
+			Request manager = GameObject.FindObjectOfType<Request> ();
+			UnityWebRequest www = UnityWebRequest.GetTexture (Avatar);
+			yield return www.Send ();
+			if (www.isError) {
+				Debug.LogError (www.error);
+			} else {
+				Texture texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+				callback (texture);
+			}
+		}
+
 		public IEnumerator Commit() {
 			// Setup request from current state of Person object
 			Request manager = GameObject.FindObjectOfType<Request> ();
 			Dictionary<string, string> data = new Dictionary<string, string> ();
-
 
 			// Create or Update?
 			string httpVerb;
