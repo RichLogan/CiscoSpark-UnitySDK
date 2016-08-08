@@ -19,7 +19,16 @@ namespace Cisco.Spark {
 			Id = (string) details ["id"];
 			DisplayName = (string) details ["displayName"];
 			Avatar = (string) details["avatar"];
-			// TODO: Created and Emails
+
+			object emails;
+			if (details.TryGetValue ("emails", out emails)) {
+				Emails = new List<string> ();
+				List<object> listOfEmails = emails as List<object>;
+				foreach (object email in listOfEmails) {
+					Emails.Add (email as string);
+				}
+			}
+			// TODO: Created
 		}
 
 		public Person(List<string> emails, string displayName, string avatar) {
