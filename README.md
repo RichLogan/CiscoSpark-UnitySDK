@@ -5,6 +5,8 @@ Very much **unoffical**, **pre-release** and under **active development**! Pull 
 
 This library takes advantage of the new `UnityEngine.Networking.UnityWebRequest` functionality introduced in Unity 5.4, as well as running all methods via Coroutines and returning results via `Actions`, in order to be non-blocking.
 
+You can follow the progress + development of this here: https://trello.com/b/BvpwAZYd/unity-spark-sdk
+
 ## Setup
 1. Import the scripts or UnityPackage
 2. Place the `Request` script on any GameObject.
