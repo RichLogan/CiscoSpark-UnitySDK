@@ -158,7 +158,7 @@ namespace Cisco.Spark {
 			using (UnityWebRequest www = manager.Generate ("messages/" + messageId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.error != null) {
-					Debug.LogError ("Failed to Retrieve Message");
+					Debug.LogError ("Failed to Retrieve Message: " + www.error);
 				} else {
 					callback(new Message(www.downloadHandler.text));
 				}
@@ -195,7 +195,7 @@ namespace Cisco.Spark {
 			using (UnityWebRequest www = manager.Generate ("messages?" + queryString, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.error != null) {
-					Debug.LogError ("Failed to List Messages");
+					Debug.LogError ("Failed to List Messages: " + www.error);
 				} else {
 					List<Message> messages = new List<Message> ();
 					Dictionary<string, object> json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;

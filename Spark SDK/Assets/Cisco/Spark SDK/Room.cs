@@ -133,7 +133,7 @@ namespace Cisco.Spark {
 			using (UnityWebRequest www = manager.Generate ("rooms?" + queryString, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.error != null) {
-					Debug.LogError ("Failed to List Rooms");
+					Debug.LogError ("Failed to List Rooms: " + www.error);
 				} else {
 					// Convert to Room objects
 					List<Room> rooms = new List<Room> ();
@@ -160,7 +160,7 @@ namespace Cisco.Spark {
 			using (UnityWebRequest www = manager.Generate ("rooms/" + roomId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.error != null) {
-					Debug.LogError ("Failed to Retrieve Room");
+					Debug.LogError ("Failed to Retrieve Room: " + www.error);
 				} else {
 					callback(new Room(www.downloadHandler.text));
 				}

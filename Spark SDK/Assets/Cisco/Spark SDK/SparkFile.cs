@@ -36,7 +36,7 @@ namespace Cisco.Spark {
 			using (UnityWebRequest www = manager.Generate ("contents/" + Id, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.error != null) {
-					Debug.LogError ("Failed to Download File");
+					Debug.LogError ("Failed to Download File: " + www.error);
 				} else {
 					Dictionary<string, string> headers = www.GetResponseHeaders ();
 					Data = www.downloadHandler.data;
@@ -62,7 +62,7 @@ namespace Cisco.Spark {
 			using (UnityWebRequest www = manager.Generate ("contents/" + Id, UnityWebRequest.kHttpVerbHEAD)) {
 				yield return www.Send ();
 				if (www.error != null) {
-					Debug.LogError ("Failed to Download File Headers");
+					Debug.LogError ("Failed to Download File Headers: " + www.error);
 				} else {
 					Dictionary<string, string> headers = www.GetResponseHeaders ();
 					Filename = headers ["Content-Disposition"].Split ('"')[1];

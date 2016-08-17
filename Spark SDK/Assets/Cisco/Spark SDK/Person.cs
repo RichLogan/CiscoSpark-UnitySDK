@@ -42,7 +42,7 @@ namespace Cisco.Spark {
 			UnityWebRequest www = UnityWebRequest.GetTexture (Avatar);
 			yield return www.Send ();
 			if (www.isError) {
-				Debug.LogError (www.error);
+				Debug.LogError ("Failed to Download Avatar: " + www.error);
 			} else {
 				Texture texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
 				callback (texture);
@@ -96,7 +96,7 @@ namespace Cisco.Spark {
 					Person person = new Person (www.downloadHandler.text);
 					callback (person);
 				} else {
-					Debug.LogError (www.error);
+					Debug.LogError ("Failed to Get Person Details: " + www.error);
 					callback (null);
 				}
 			}
