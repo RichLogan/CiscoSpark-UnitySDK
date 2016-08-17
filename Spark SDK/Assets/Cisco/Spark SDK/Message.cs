@@ -123,7 +123,7 @@ namespace Cisco.Spark {
 				byte[] raw_data = System.Text.Encoding.UTF8.GetBytes (Json.Serialize (data));
 				www.uploadHandler = new UploadHandlerRaw (raw_data);
 				yield return www.Send ();
-				if (www.error != null) {
+				if (www.isError) {
 					Debug.LogError("Failed to Create Message: " + www.error);
 				} else {
 					Message message = new Message (www.downloadHandler.text);
@@ -140,7 +140,7 @@ namespace Cisco.Spark {
 				Request manager = GameObject.FindObjectOfType<Request> ();
 				using (UnityWebRequest www = manager.Generate ("messages/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
-					if (www.error != null) {
+					if (www.isError) {
 						Debug.LogError ("Failed to Delete Message: " + www.error);
 					}
 				}
@@ -157,7 +157,7 @@ namespace Cisco.Spark {
 			Request manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("messages/" + messageId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
-				if (www.error != null) {
+				if (www.isError) {
 					Debug.LogError ("Failed to Retrieve Message: " + www.error);
 				} else {
 					callback(new Message(www.downloadHandler.text));
@@ -194,7 +194,7 @@ namespace Cisco.Spark {
 			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
 			using (UnityWebRequest www = manager.Generate ("messages?" + queryString, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
-				if (www.error != null) {
+				if (www.isError) {
 					Debug.LogError ("Failed to List Messages: " + www.error);
 				} else {
 					List<Message> messages = new List<Message> ();

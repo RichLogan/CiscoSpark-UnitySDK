@@ -68,7 +68,7 @@ namespace Cisco.Spark {
 				byte[] raw_data = System.Text.Encoding.UTF8.GetBytes (Json.Serialize (data));
 				www.uploadHandler = new UploadHandlerRaw (raw_data);
 				yield return www.Send ();
-				if (www.error != null) {
+				if (www.isError) {
 					Debug.LogError("Failed to Create User: " + www.error);
 				}
 			}
@@ -79,7 +79,7 @@ namespace Cisco.Spark {
 				Request manager = GameObject.FindObjectOfType<Request> ();
 				using (UnityWebRequest www = manager.Generate ("people/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
-					if (www.error != null) {
+					if (www.isError) {
 						Debug.LogError ("Failed to Delete User: " + www.error);
 					}
 				}

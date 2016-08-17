@@ -35,7 +35,7 @@ namespace Cisco.Spark {
 			Request manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("contents/" + Id, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
-				if (www.error != null) {
+				if (www.isError) {
 					Debug.LogError ("Failed to Download File: " + www.error);
 				} else {
 					Dictionary<string, string> headers = www.GetResponseHeaders ();
@@ -67,7 +67,7 @@ namespace Cisco.Spark {
 			Request manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("contents/" + Id, UnityWebRequest.kHttpVerbHEAD)) {
 				yield return www.Send ();
-				if (www.error != null) {
+				if (www.isError) {
 					Debug.LogError ("Failed to Download File Headers: " + www.error);
 				} else {
 					Dictionary<string, string> headers = www.GetResponseHeaders ();

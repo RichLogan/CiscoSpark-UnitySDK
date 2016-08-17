@@ -80,7 +80,7 @@ namespace Cisco.Spark {
 				byte[] raw_data = System.Text.Encoding.UTF8.GetBytes (Json.Serialize (data));
 				www.uploadHandler = new UploadHandlerRaw (raw_data);
 				yield return www.Send ();
-				if (www.error != null) {
+				if (www.isError) {
 					Debug.LogError("Failed to Create Room: " + www.error);
 				} else {
 					Room room = new Room (www.downloadHandler.text);
@@ -97,7 +97,7 @@ namespace Cisco.Spark {
 				Request manager = GameObject.FindObjectOfType<Request> ();
 				using (UnityWebRequest www = manager.Generate ("rooms/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
-					if (www.error != null) {
+					if (www.isError) {
 						Debug.LogError ("Failed to Delete Room: " + www.error);
 					}
 				}
@@ -132,7 +132,7 @@ namespace Cisco.Spark {
 			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
 			using (UnityWebRequest www = manager.Generate ("rooms?" + queryString, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
-				if (www.error != null) {
+				if (www.isError) {
 					Debug.LogError ("Failed to List Rooms: " + www.error);
 				} else {
 					// Convert to Room objects
@@ -159,7 +159,7 @@ namespace Cisco.Spark {
 			Request manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("rooms/" + roomId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
-				if (www.error != null) {
+				if (www.isError) {
 					Debug.LogError ("Failed to Retrieve Room: " + www.error);
 				} else {
 					callback(new Room(www.downloadHandler.text));
