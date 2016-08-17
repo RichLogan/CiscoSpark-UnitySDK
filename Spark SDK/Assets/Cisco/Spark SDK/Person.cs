@@ -38,7 +38,6 @@ namespace Cisco.Spark {
 		}
 
 		public IEnumerator DownloadAvatar(Action<Texture> callback) {
-			Request manager = GameObject.FindObjectOfType<Request> ();
 			UnityWebRequest www = UnityWebRequest.GetTexture (Avatar);
 			yield return www.Send ();
 			if (www.isError) {
