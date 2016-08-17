@@ -42,14 +42,20 @@ namespace Cisco.Spark {
 					Data = www.downloadHandler.data;
 					Filename = headers ["Content-Disposition"].Split ('"')[1];
 					string fileType = Filename.Split ('.')[1];
-					Debug.Log (fileType);
 					if (fileType.Equals ("png") || fileType.Equals ("jpg")) {
+						// Downloaded File is a supported image
 						Texture2D texture = new Texture2D (2,2);
 						texture.LoadImage (Data);
 						returnType = typeof(UnityEngine.Texture2D);
 						callback (texture);
 					}
 					else if (forceBytes) {
+						// Asked for bytes
+						returnType = typeof(System.Byte);
+						callback (Data);
+					} else {
+						// TODO: Support more file types
+						// No supported file type, returning bytes
 						returnType = typeof(System.Byte);
 						callback (Data);
 					}
