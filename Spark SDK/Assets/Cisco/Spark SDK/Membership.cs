@@ -23,14 +23,19 @@ namespace Cisco.Spark {
 		/// <param name="json">Json.</param>
 		public Membership(string json) {
 			Dictionary<string, object> membershipData = Json.Deserialize (json) as Dictionary<string, object>;
-			Id = membershipData ["id"] as string;
-			RoomId = membershipData ["roomId"] as string;
-			PersonId = membershipData ["personId"] as string;
-			PersonEmail = membershipData ["personEmail"] as string;
-			PersonDisplayName = membershipData ["personDisplayName"] as string;
-			IsModerator = (bool) membershipData ["isModerator"];
-			IsMonitor = (bool) membershipData ["isMonitor"];
-			Created = membershipData ["created"] as string;
+			try {
+				Id = membershipData ["id"] as string;
+				RoomId = membershipData ["roomId"] as string;
+				PersonId = membershipData ["personId"] as string;
+				PersonEmail = membershipData ["personEmail"] as string;
+				PersonDisplayName = membershipData ["personDisplayName"] as string;
+				IsModerator = (bool) membershipData ["isModerator"];
+				IsMonitor = (bool) membershipData ["isMonitor"];
+				Created = membershipData ["created"] as string;
+			} catch (KeyNotFoundException) {
+				// TODO: Spark Exceptions
+				Debug.Log ("Couldn't parse Membership");
+			}
 		}
 
 		/// <summary>
@@ -115,9 +120,8 @@ namespace Cisco.Spark {
 		/// <param name="callback">Callback.</param>
 		/// <param name="roomId">Room identifier.</param>
 		/// <param name="personId">Person identifier.</param>
-		/// <param name="personEmail">Person email.</param>
-		/// <param name="max">Max.</param>
-		/// TODO: Add optional memberships
+		/// <param name="personEmail">Person email</param>
+		/// <param name="max">Max number of Memberships to return</param>
 		public static IEnumerator ListMemberships(Action<List<Membership>> callback, string roomId = null, string personId = null, string personEmail = null, int max = 0) {
 			Request manager = GameObject.FindObjectOfType<Request> ();
 
