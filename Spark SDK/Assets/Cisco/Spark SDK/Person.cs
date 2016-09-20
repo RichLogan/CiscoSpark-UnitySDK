@@ -10,25 +10,27 @@ namespace Cisco.Spark {
 		public string Id { get; private set;}
 		public string DisplayName { get; set;}
 		public string Avatar { get; set;}
-		public DateTime Created { get; private set;}
+		public string Created { get; private set;}
 		public List<string> Emails { get; set;}
+		public string Status { get; private set;}
 
 		public Person(string json) {
-			Dictionary<string, object> details = new Dictionary<string, object> ();
-			details = Json.Deserialize (json) as Dictionary<string, object>;
+			var details = Json.Deserialize (json) as Dictionary<string, object>;
 			Id = (string) details ["id"];
 			DisplayName = (string) details ["displayName"];
 			Avatar = (string) details["avatar"];
+			// TODO: Created as DateTime
+			Created = (string) details ["created"];
+			Status = (string) details ["status"];
 
 			object emails;
 			if (details.TryGetValue ("emails", out emails)) {
 				Emails = new List<string> ();
-				List<object> listOfEmails = emails as List<object>;
-				foreach (object email in listOfEmails) {
+				var listOfEmails = emails as List<object>;
+				foreach (var email in listOfEmails) {
 					Emails.Add (email as string);
 				}
 			}
-			// TODO: Created
 		}
 
 		public Person(List<string> emails, string displayName, string avatar) {
@@ -50,8 +52,8 @@ namespace Cisco.Spark {
 
 		public IEnumerator Commit() {
 			// Setup request from current state of Person object
-			Request manager = GameObject.FindObjectOfType<Request> ();
-			Dictionary<string, string> data = new Dictionary<string, string> ();
+			var manager = GameObject.FindObjectOfType<Request> ();
+			var data = new Dictionary<string, string> ();
 
 			// Create or Update?
 			string httpVerb;
@@ -76,23 +78,22 @@ namespace Cisco.Spark {
 
 		public IEnumerator Delete() {
 			if (Id != null) {
-				Request manager = GameObject.FindObjectOfType<Request> ();
+				var manager = GameObject.FindObjectOfType<Request> ();
 				using (UnityWebRequest www = manager.Generate ("people/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
 						Debug.LogError ("Failed to Delete User: " + www.error);
 					}
 				}
-
 			}
 		}
 		
 		static public IEnumerator GetPersonDetails(string personId, Action<Person> callback) {
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate("people/" + personId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.error == null) {
-					Person person = new Person (www.downloadHandler.text);
+					var person = new Person (www.downloadHandler.text);
 					callback (person);
 				} else {
 					Debug.LogError ("Failed to Get Person Details: " + www.error);
