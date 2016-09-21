@@ -60,6 +60,8 @@ StartCoroutine (Message.ListMessages (<ROOM_ID>, messages => {
 ```
 
 ## Tests
+*Tests are pretty lackluster at the moment. I'll work on getting them up to a proper standard once I hit parity with the Web.*
+
 Unfortunately, it is not possible to run tests for the SDK using the builtin Unity Test Tools, due to a lack of support for running Asynchronous operations. As a result, I have created some `MonoBehaviour` scripts that will run the tests that can be found in `Assets/Tests` in order to simulate the environment they will be run in. To run them, just attach any of the `Test*` scripts and `Request` to a `GameObject`, and the results will be outputted to the console.
 
 **Note: This will create/edit/destroy real test rooms/memberships/etc on the given Spark account, but they will clean up after themselves if possible.**
