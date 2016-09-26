@@ -20,7 +20,7 @@ namespace Cisco.Spark {
 		/// </summary>
 		/// <param name="json">The API returned JSON string</param>
 		public Room(string json) {
-			Dictionary<string, object> data = Json.Deserialize (json) as Dictionary<string, object>;
+			var data = Json.Deserialize (json) as Dictionary<string, object>;
 			Id = (string)data ["id"];
 			Title = (string)data ["title"];
 			RoomType = (string)data ["type"];
@@ -49,10 +49,10 @@ namespace Cisco.Spark {
 		/// <param name="callback">The created/updated Room from Spark</param>
 		public IEnumerator Commit(Action<Room> callback) {
 			// Setup request from current state of Room object
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = GameObject.FindObjectOfType<Request> ();
 
 			// Room Data
-			Dictionary<string, string> data = new Dictionary<string, string> ();
+			var data = new Dictionary<string, string> ();
 			data ["title"] = Title;
 			data ["teamId"] = TeamId;
 
@@ -94,7 +94,7 @@ namespace Cisco.Spark {
 		/// </summary>
 		public IEnumerator Delete() {
 			if (Id != null) {
-				Request manager = GameObject.FindObjectOfType<Request> ();
+				var manager = GameObject.FindObjectOfType<Request> ();
 				using (UnityWebRequest www = manager.Generate ("rooms/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
@@ -114,8 +114,8 @@ namespace Cisco.Spark {
 		/// <param name="callback">List of rooms</param>
 		public static IEnumerator ListRooms(Action<List<Room>> callback, string teamId = null, int max = 0, string type = null) {
 			// Build Request
-			Request manager = GameObject.FindObjectOfType<Request> ();
-			Dictionary<string, string> data = new Dictionary<string, string> ();
+			var manager = GameObject.FindObjectOfType<Request> ();
+			var data = new Dictionary<string, string> ();
 
 			// Handle optional arguments
 			if (teamId != null) {
@@ -136,9 +136,9 @@ namespace Cisco.Spark {
 					Debug.LogError ("Failed to List Rooms: " + www.error);
 				} else {
 					// Convert to Room objects
-					List<Room> rooms = new List<Room> ();
-					Dictionary<string, object> json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					List<object> items = json ["items"] as List<object>;
+					var rooms = new List<Room> ();
+					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					var items = json ["items"] as List<object>;
 					foreach (Dictionary<string, object> room_json in items) {
 						// TODO: Do I need to reconvert this?
 						string reJsoned = Json.Serialize (room_json);
@@ -156,7 +156,7 @@ namespace Cisco.Spark {
 		/// <param name="roomId">Room identifier</param>
 		/// <param name="callback">Callback.</param>
 		public static IEnumerator GetRoomDetails(string roomId, Action<Room> callback) {
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("rooms/" + roomId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.isError) {
