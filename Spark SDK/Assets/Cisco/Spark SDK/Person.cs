@@ -55,6 +55,15 @@ namespace Cisco.Spark {
 		}
 
 		/// <summary>
+		/// Gets details of the currently authenticated user from Spark.
+		/// </summary>
+		/// <returns>The Person object.</returns>
+		/// <param name="callback">Callback.</param>
+		static public IEnumerator GetPersonDetails(Action<Person> callback) {
+			yield return GetPersonDetails ("me", callback);
+		}
+
+		/// <summary>
 		/// Gets details of a Person from Spark
 		/// </summary>
 		/// <returns>The Person object</returns>
