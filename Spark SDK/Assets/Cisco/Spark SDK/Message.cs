@@ -24,7 +24,15 @@ namespace Cisco.Spark {
 		/// </summary>
 		/// <param name="json">JSON Representation of the message</param>
 		public Message(string json) {
-			Dictionary<string, object> data = Json.Deserialize (json) as Dictionary<string, object>;
+			var data = Json.Deserialize (json) as Dictionary<string, object>;
+
+			// TODO: Proper Spark Exceptions
+			object message;
+			if (data.TryGetValue ("message", out message)) {
+				Debug.Log (message as string);
+				return;
+			}
+
 			Id = data ["id"] as string;
 			RoomId = data ["roomId"] as string;
 
@@ -57,10 +65,10 @@ namespace Cisco.Spark {
 			object files;
 			if (data.TryGetValue ("files", out files)) {
 				Files = new List<SparkFile> ();
-				List<object> listOfFiles = files as List<object>;
-				foreach (object toString in listOfFiles) {
-					string url = toString as string;
-					string fileId = url.Substring (url.LastIndexOf ('/') + 1);
+				var listOfFiles = files as List<object>;
+				foreach (var toString in listOfFiles) {
+					var url = toString as string;
+					var fileId = url.Substring (url.LastIndexOf ('/') + 1);
 					Files.Add (new SparkFile(fileId));
 				}
 			}
@@ -84,13 +92,13 @@ namespace Cisco.Spark {
 		/// <param name="callback">The created/updated Room from Spark</param>
 		public IEnumerator Commit(Action<Message> callback) {
 			// Setup request from current state of Room object
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = GameObject.FindObjectOfType<Request> ();
 
 			// Message Data
-			Dictionary<string, string> data = new Dictionary<string, string> ();
+			var data = new Dictionary<string, string> ();
 			 
 			// Pick one of destination!
-			int destinationCount = 0;
+			var destinationCount = 0;
 
 			if (RoomId != null) {
 				data ["roomId"] = RoomId;
@@ -115,8 +123,12 @@ namespace Cisco.Spark {
 			data ["markdown"] = Markdown;
 			data ["html"] = Html;
 
-			// TODO: Files
-			// data ["files"] = null;
+			// TODO: File uploading
+			try {
+				if (data["files"] != null) {
+					throw new NotImplementedException ("Uploading files is not currently supported.");
+				}
+			} catch (KeyNotFoundException) { }
 
 			// Make request
 			using (UnityWebRequest www = manager.Generate("messages", UnityWebRequest.kHttpVerbPOST)) {
@@ -126,7 +138,7 @@ namespace Cisco.Spark {
 				if (www.isError) {
 					Debug.LogError("Failed to Create Message: " + www.error);
 				} else {
-					Message message = new Message (www.downloadHandler.text);
+					var message = new Message (www.downloadHandler.text);
 					callback (message);
 				}
 			}
@@ -137,7 +149,7 @@ namespace Cisco.Spark {
 		/// </summary>
 		public IEnumerator Delete() {
 			if (Id != null) {
-				Request manager = GameObject.FindObjectOfType<Request> ();
+				var manager = GameObject.FindObjectOfType<Request> ();
 				using (UnityWebRequest www = manager.Generate ("messages/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
@@ -154,7 +166,7 @@ namespace Cisco.Spark {
 		/// <param name="messageId">Message identifier.</param>
 		/// <param name="callback">The message object</param>
 		public static IEnumerator GetMessageDetails(string messageId, Action<Message> callback) {
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("messages/" + messageId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.isError) {
@@ -175,8 +187,8 @@ namespace Cisco.Spark {
 		/// <param name="beforeMessage">Before message.</param>
 		/// <param name="max">Max number of messages to recieve</param>
 		public static IEnumerator ListMessages(string roomId, Action<List<Message>> callback, string before = null, string beforeMessage = null, int max = 0) {
-			Request manager = GameObject.FindObjectOfType<Request> ();
-			Dictionary<string, string> data = new Dictionary<string, string> ();
+			var manager = GameObject.FindObjectOfType<Request> ();
+			var data = new Dictionary<string, string> ();
 			data ["roomId"] = roomId;
 
 			// Optional arguments
@@ -197,11 +209,11 @@ namespace Cisco.Spark {
 				if (www.isError) {
 					Debug.LogError ("Failed to List Messages: " + www.error);
 				} else {
-					List<Message> messages = new List<Message> ();
-					Dictionary<string, object> json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					var messages = new List<Message> ();
+					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 					try {
-						List<object> items = json ["items"] as List<object>;
-						foreach (Dictionary<string, object> message_json in items) {
+						var items = json ["items"] as List<object>;
+						foreach (var message_json in items) {
 							string reJsoned = Json.Serialize (message_json);
 							messages.Add (new Message (reJsoned));
 						}
