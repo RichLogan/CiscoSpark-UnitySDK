@@ -7,6 +7,8 @@ This library takes advantage of the new `UnityEngine.Networking.UnityWebRequest`
 
 You can follow the progress + development of this here: https://trello.com/b/BvpwAZYd/unity-spark-sdk
 
+Please note: I'm coming from a hacky python background, and this is the first self-contained public library I've ever attempted to build, so I'm very much learning as I go. The more I learn, the more mistakes I realise I've made, so please point things out that I should change!
+
 ## Setup
 1. Import the scripts or UnityPackage
 2. Place the `Request` script on any GameObject.
