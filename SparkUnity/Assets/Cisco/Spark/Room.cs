@@ -16,11 +16,10 @@ namespace Cisco.Spark {
 		public DateTime LastActivity { get; set; }
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Room"/> class from a API JSON representation.*/
+		/// Initializes a new instance of the <see cref="Cisco.Spark.Room"/> class.
 		/// </summary>
-		/// <param name="json">The API returned JSON string</param>
-		public Room(string json) {
-			var data = Json.Deserialize (json) as Dictionary<string, object>;
+		/// <param name="data">Data.</param>
+		public Room(Dictionary<string, object> data) {
 			Id = (string)data ["id"];
 			Title = (string)data ["title"];
 			RoomType = (string)data ["type"];
@@ -43,11 +42,11 @@ namespace Cisco.Spark {
 		}
 
 		/// <summary>
-		/// Commits the current state of the local Room object to Spark.
-		/// This will create a new room if it doesn't exist. 
+		/// Commit the Room to the Spark Service
 		/// </summary>
-		/// <param name="callback">The created/updated Room from Spark</param>
-		public IEnumerator Commit(Action<Room> callback) {
+		/// <param name="error">Error from Spark.</param>
+		/// <param name="result">The resultant Spark Room.</param>
+		public IEnumerator Commit(Action<SparkMessage> error, Action<Room> result) {
 			// Setup request from current state of Room object
 			var manager = GameObject.FindObjectOfType<Request> ();
 
@@ -83,36 +82,56 @@ namespace Cisco.Spark {
 				if (www.isError) {
 					Debug.LogError("Failed to Create Room: " + www.error);
 				} else {
-					Room room = new Room (www.downloadHandler.text);
-					callback (room);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Delete this Room on Spark.
-		/// </summary>
-		public IEnumerator Delete() {
-			if (Id != null) {
-				var manager = GameObject.FindObjectOfType<Request> ();
-				using (UnityWebRequest www = manager.Generate ("rooms/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
-					yield return www.Send ();
-					if (www.isError) {
-						Debug.LogError ("Failed to Delete Room: " + www.error);
+					var roomData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					if (roomData.ContainsKey ("message")) {
+						error (new SparkMessage (roomData));
+						result (null);
+					} else {
+						result(new Room (roomData));
+						error (null);
 					}
 				}
 			}
 		}
 
 		/// <summary>
-		/// Lists the rooms matching the given filters you are a member of
+		/// Delete the specified Room on Spark.
 		/// </summary>
-		/// <returns>List of rooms</returns>
-		/// <param name="teamId">Show rooms belonging to a specific team</param>
-		/// <param name="max">Maximum number of rooms to return</param>
-		/// <param name="type">Type of room to search for</param>
-		/// <param name="callback">List of rooms</param>
-		public static IEnumerator ListRooms(Action<List<Room>> callback, string teamId = null, int max = 0, string type = null) {
+		/// <param name="error">Error.</param>
+		/// <param name="result">Success/Fail.</param>
+		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
+			if (Id != null) {
+				var manager = GameObject.FindObjectOfType<Request> ();
+				using (UnityWebRequest www = manager.Generate ("rooms/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
+					yield return www.Send ();
+					if (www.isError) {
+						Debug.LogError ("Failed to Delete Room: " + www.error);
+					} else {
+						// Delete returns 204 on success
+						if (www.responseCode == 204) {
+							error (null);
+							result (true);
+						} else {
+							// Delete Failed
+							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+							error (new SparkMessage (json));
+							result (false);
+						}
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// Lists the rooms matching the given filters that you are a member of.
+		/// </summary>
+		/// <returns>List of rooms.</returns>
+		/// <param name="teamId">Show rooms belonging to a specific team.</param>
+		/// <param name="max">Maximum number of rooms to return.</param>
+		/// <param name="type">Type of room to search for.</param>
+		/// <param name="error">Any error from Spark.</param>
+		/// <param name="result">List of rooms.</param>
+		public static IEnumerator ListRooms(Action<SparkMessage> error, Action<List<Room>> result, string teamId = null, int max = 0, string type = null) {
 			// Build Request
 			var manager = GameObject.FindObjectOfType<Request> ();
 			var data = new Dictionary<string, string> ();
@@ -122,10 +141,10 @@ namespace Cisco.Spark {
 				data ["teamId"] = teamId;
 			}
 			if (max != 0) {
-				data ["max"] = max.ToString ();	
+				data ["max"] = max.ToString ();
 			}
 			if (type != null) {
-				data ["type"] = type;	
+				data ["type"] = type;
 			}
 
 			// Make Request
@@ -136,15 +155,20 @@ namespace Cisco.Spark {
 					Debug.LogError ("Failed to List Rooms: " + www.error);
 				} else {
 					// Convert to Room objects
-					var rooms = new List<Room> ();
+
 					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					var items = json ["items"] as List<object>;
-					foreach (Dictionary<string, object> room_json in items) {
-						// TODO: Do I need to reconvert this?
-						string reJsoned = Json.Serialize (room_json);
-						rooms.Add(new Room (reJsoned));
+					if (json.ContainsKey ("message")) {
+						error (new SparkMessage(json));
+						result (null);
+					} else {
+						var rooms = new List<Room> ();
+						var items = json ["items"] as List<object>;
+						foreach (Dictionary<string, object> room_json in items) {
+							rooms.Add(new Room (room_json));
+						}
+						result (rooms);
+						error (null);
 					}
-					callback (rooms);
 				}
 			}
 		}
@@ -154,15 +178,23 @@ namespace Cisco.Spark {
 		/// </summary>
 		/// <returns>The Room object</returns>
 		/// <param name="roomId">Room identifier</param>
-		/// <param name="callback">Callback.</param>
-		public static IEnumerator GetRoomDetails(string roomId, Action<Room> callback) {
+		/// <param name="error">Error from Spark, if any.</param>
+		/// <param name="result">The returned Room from Spark.</param>
+		public static IEnumerator GetRoomDetails(string roomId, Action<SparkMessage> error, Action<Room> result) {
 			var manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("rooms/" + roomId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.isError) {
 					Debug.LogError ("Failed to Retrieve Room: " + www.error);
 				} else {
-					callback(new Room(www.downloadHandler.text));
+					var roomDetails = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					if (roomDetails.ContainsKey ("message")) {
+						error (new SparkMessage (roomDetails));
+						result (null);
+					} else {
+						result (new Room (roomDetails));
+						error (null);
+					}
 				}
 			}
 		}
