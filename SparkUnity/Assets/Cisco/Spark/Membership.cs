@@ -119,6 +119,7 @@ namespace Cisco.Spark {
 				using (UnityWebRequest www = manager.Generate ("memberships/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
+						// Network Error
 						Debug.LogError ("Failed to Delete Membership: " + www.error);
 					} else {
 						// Delete returns 204 on success
@@ -173,7 +174,7 @@ namespace Cisco.Spark {
 
 				if (www.isError) {
 					// Network error
-					Debug.LogError(www.error);
+					Debug.LogError("Failed to List Memberships: " + www.error);
 				} else {
 					// Request succeeded, parse response
 					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
