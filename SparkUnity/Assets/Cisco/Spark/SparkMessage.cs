@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace Cisco.Spark {
 	public class SparkMessage {
 		public string Message;
-		public IEnumerable Errors;
+		public IEnumerable<SparkError> Errors;
 		public string TrackingId;
 	
 		public SparkMessage (Dictionary<string, object> data) {
