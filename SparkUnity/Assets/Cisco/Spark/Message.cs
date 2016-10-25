@@ -1,9 +1,9 @@
-﻿using UnityEngine;
-using UnityEngine.Networking;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using MiniJSON;
+using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Cisco.Spark {
 	public class Message {
@@ -22,19 +22,12 @@ namespace Cisco.Spark {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Cisco.Spark.Message"/> class from a Spark API retrieval.
 		/// </summary>
-		/// <param name="json">JSON Representation of the message</param>
-		public Message(string json) {
-			var data = Json.Deserialize (json) as Dictionary<string, object>;
-
-			// TODO: Proper Spark Exceptions
-			object message;
-			if (data.TryGetValue ("message", out message)) {
-				Debug.Log (message as string);
-				return;
-			}
-
+		/// <param name="data">Message data from Spark.</param>
+		public Message(Dictionary<string, object> data) {
 			Id = data ["id"] as string;
 			RoomId = data ["roomId"] as string;
+			PersonId = data ["personId"] as string;
+			PersonEmail = data ["personEmail"] as string;
 
 			// Handle Optionals
 			object toPersonId;
@@ -72,25 +65,21 @@ namespace Cisco.Spark {
 					Files.Add (new SparkFile(fileId));
 				}
 			}
-
-			PersonId = data ["personId"] as string;
-			PersonEmail = data ["personEmail"] as string;
 		}
 
 		/// <summary>
 		/// Initializes a new <see cref="Cisco.Spark.Message"/> locally. Use <see cref="Cisco.Spark.Message.Commit"/> to
 		/// save to the Spark service.
 		/// </summary>
-		public Message() {
-			
-		}
+		public Message() { }
 
 		/// <summary>
 		/// Commits the current state of the local Room object to Spark.
 		/// This will create a new room if it doesn't exist. 
 		/// </summary>
-		/// <param name="callback">The created/updated Room from Spark</param>
-		public IEnumerator Commit(Action<Message> callback) {
+		/// <param name="error">The error from Spark (if any).</param>
+		/// <param name="result">The created/updated Room from Spark.</param>
+		public IEnumerator Commit(Action<SparkMessage> error, Action<Message> result) {
 			// Setup request from current state of Room object
 			var manager = GameObject.FindObjectOfType<Request> ();
 
@@ -138,22 +127,41 @@ namespace Cisco.Spark {
 				if (www.isError) {
 					Debug.LogError("Failed to Create Message: " + www.error);
 				} else {
-					var message = new Message (www.downloadHandler.text);
-					callback (message);
+					var messageData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					if (messageData.ContainsKey ("message")) {
+						error (new SparkMessage (messageData));
+						result (null);
+					} else {
+						result(new Message (messageData));
+						error (null);
+					}
 				}
 			}
 		}
-
+			
 		/// <summary>
-		/// Delete this Message on Spark.
+		/// Deleted the message on Spark.
 		/// </summary>
-		public IEnumerator Delete() {
+		/// <param name="error">Error.</param>
+		/// <param name="result">Result.</param>
+		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
 			if (Id != null) {
 				var manager = GameObject.FindObjectOfType<Request> ();
 				using (UnityWebRequest www = manager.Generate ("messages/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
 						Debug.LogError ("Failed to Delete Message: " + www.error);
+					} else {
+						// Delete returns 204 on success
+						if (www.responseCode == 204) {
+							error (null);
+							result (true);
+						} else {
+							// Delete Failed
+							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+							error (new SparkMessage (json));
+							result (false);
+						}
 					}
 				}
 			}
@@ -164,29 +172,38 @@ namespace Cisco.Spark {
 		/// </summary>
 		/// <returns>The Message object</returns>
 		/// <param name="messageId">Message identifier.</param>
-		/// <param name="callback">The message object</param>
-		public static IEnumerator GetMessageDetails(string messageId, Action<Message> callback) {
+		/// <param name="error">Error.</param>
+		/// <param name="result">Result.</param>
+		public static IEnumerator GetMessageDetails(string messageId, Action<SparkMessage> error, Action<Message> result) {
 			var manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("messages/" + messageId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.isError) {
 					Debug.LogError ("Failed to Retrieve Message: " + www.error);
 				} else {
-					callback(new Message(www.downloadHandler.text));
+					var messageDetails = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					if (messageDetails.ContainsKey ("message")) {
+						error (new SparkMessage (messageDetails));
+						result (null);
+					} else {
+						result (new Message (messageDetails));
+						error (null);
+					}
 				}
 			}
 		}
-
+			
 		/// <summary>
 		/// Lists the messages.
 		/// </summary>
 		/// <returns>The messages.</returns>
 		/// <param name="roomId">Room identifier.</param>
-		/// <param name="callback">The list of Messages</param>
-		/// <param name="before">Before</param>
-		/// <param name="beforeMessage">Before message.</param>
-		/// <param name="max">Max number of messages to recieve</param>
-		public static IEnumerator ListMessages(string roomId, Action<List<Message>> callback, string before = null, string beforeMessage = null, int max = 0) {
+		/// <param name="error">Error.</param>
+		/// <param name="result">Result.</param>
+		/// <param name="before"></param>
+		/// <param name="beforeMessage">List all messages before a specific message ID.</param>
+		/// <param name="max">Max number of messages.</param>
+		public static IEnumerator ListMessages(string roomId, Action<SparkMessage> error, Action<List<Message>> result, string before = null, string beforeMessage = null, int max = 0) {
 			var manager = GameObject.FindObjectOfType<Request> ();
 			var data = new Dictionary<string, string> ();
 			data ["roomId"] = roomId;
@@ -209,17 +226,18 @@ namespace Cisco.Spark {
 				if (www.isError) {
 					Debug.LogError ("Failed to List Messages: " + www.error);
 				} else {
-					var messages = new List<Message> ();
 					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					try {
+					if (json.ContainsKey ("message")) {
+						error (new SparkMessage (json));
+						result (null);
+					} else {
+						var messages = new List<Message>();
 						var items = json ["items"] as List<object>;
-						foreach (var message_json in items) {
-							string reJsoned = Json.Serialize (message_json);
-							messages.Add (new Message (reJsoned));
+						foreach (Dictionary<string, object> message_json in items) {
+							messages.Add (new Message (message_json));
 						}
-						callback (messages);
-					} catch (KeyNotFoundException) {
-						Debug.LogError (www.downloadHandler.text);
+						result (messages);
+						error (null);
 					}
 				}
 			}
