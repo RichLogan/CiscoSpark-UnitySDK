@@ -156,10 +156,10 @@ namespace Cisco.Spark {
 				data ["roomId"] = roomId;
 			} 
 			if (personId != null) {
-				data ["personId"] = roomId;
+				data ["personId"] = personId;
 			}
 			if (personEmail != null) {
-				data ["personEmail"] = roomId;
+				data ["personEmail"] = personEmail;
 			}
 			if (max != 0) {
 				data ["max"] = max.ToString ();
