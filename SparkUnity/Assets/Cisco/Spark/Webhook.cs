@@ -13,27 +13,38 @@ namespace Cisco.Spark {
 		public string Resource { get; set; }
 		public string Event { get; set; }
 		public string Filter { get; set; }
+		public string OrgId { get; set; }
+		public string CreatedBy { get; set; }
+		public string AppId { get; set; }
 		public string Secret { get; set; }
 		public DateTime Created { get; set; }
+
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Cisco.Spark.Webhook"/> class from a API JSON representation.*/
 		/// </summary>
-		/// <param name="json">The API returned JSON string</param>
-		public Webhook(string json) {
-			var data = Json.Deserialize (json) as Dictionary<string, object>;
+		/// <param name="data">The API returned Webhook data</param>
+		public Webhook(Dictionary<string, object> data) {
 			Id = (string)data ["id"];
 			Name = (string)data ["name"];
 			TargetUrl = (string)data ["targetUrl"];
 			Resource = (string)data ["resource"];
 			Event = (string)data ["event"];
-			Filter = (string)data ["filter"];
+			OrgId = (string)data ["orgId"];
+			CreatedBy = (string)data ["createdBy"];
+			AppId = (string)data ["appId"];
 			Created = DateTime.Parse ((string)data ["created"]);
+
+			// Filter may not always be retrieved
+			object filter;
+			if (data.TryGetValue ("filter", out filter)) {
+				Filter = (string)data ["filter"];
+			}
 
 			// Secret may not always be retrieved
 			object secret;
 			if (data.TryGetValue ("secret", out secret)) {
-				Secret = (string)data ["secret"];	
+				Secret = (string)data ["secret"];
 			}
 		}
 			
@@ -59,8 +70,9 @@ namespace Cisco.Spark {
 		/// Commits the current state of the local Webhook object to Spark.
 		/// This will create a new webhook if it doesn't exist. 
 		/// </summary>
-		/// <param name="callback">The created/updated Webhook from Spark</param>
-		public IEnumerator Commit(Action<Webhook> callback) {
+		/// <param name="error">The error or message from Spark (if any)</param>
+		/// <param name="result">The created/updated Webhook from Spark (if any)</param>
+		public IEnumerator Commit(Action<SparkMessage> error, Action<Webhook> result) {
 			// Setup request from current state of Webhook object
 			var manager = GameObject.FindObjectOfType<Request> ();
 
@@ -101,10 +113,19 @@ namespace Cisco.Spark {
 				www.uploadHandler = new UploadHandlerRaw (raw_data);
 				yield return www.Send ();
 				if (www.isError) {
-					Debug.LogError("Failed to Create/Update Webhook: " + www.error);
+					Debug.LogError("Failed to Create Webhook: " + www.error);
 				} else {
-					var webhook = new Webhook (www.downloadHandler.text);
-					callback (webhook);
+					// Parse Response
+					var webhookData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					if (webhookData.ContainsKey ("message")) {
+						// Spark Error
+						error (new SparkMessage (webhookData));
+						result (null);
+					} else {
+						// Create local Membership object
+						error(null);
+						result(new Webhook (webhookData));
+					}
 				}
 			}
 		}
@@ -112,19 +133,31 @@ namespace Cisco.Spark {
 		/// <summary>
 		/// Delete this Webhook on Spark.
 		/// </summary>
-		public IEnumerator Delete() {
+		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
 			if (Id != null) {
 				var manager = GameObject.FindObjectOfType<Request> ();
 				using (UnityWebRequest www = manager.Generate ("webhooks/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
+						// Network Error
 						Debug.LogError ("Failed to Delete Webhook: " + www.error);
+					} else {
+						// Delete returns 204 on success
+						if (www.responseCode == 204) {
+							error (null);
+							result (true);
+						} else {
+							// Delete Failed
+							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+							error (new SparkMessage (json));
+							result (false);
+						}
 					}
 				}
 			}
 		}
 			
-		public static IEnumerator ListWebhooks(Action<List<Webhook>> callback, string teamId = null, int max = 0, string type = null) {
+		public static IEnumerator ListWebhooks(Action<SparkMessage> error, Action<List<Webhook>> result, string teamId = null, int max = 0, string type = null) {
 			// Build Request
 			var manager = GameObject.FindObjectOfType<Request> ();
 			var data = new Dictionary<string, string> ();
@@ -140,23 +173,34 @@ namespace Cisco.Spark {
 				data ["type"] = type;	
 			}
 
-			// Make Request
+			// Optional Parameters to URL query
 			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
+
+			// Make Request
 			using (UnityWebRequest www = manager.Generate ("webhooks?" + queryString, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
+
 				if (www.isError) {
-					Debug.LogError ("Failed to List Webhooks: " + www.error);
+					// Network error
+					Debug.LogError("Failed to List Webhooks: " + www.error);
 				} else {
-					// Convert to Webhook objects
-					var webhooks = new List<Webhook> ();
+					// Request succeeded, parse response
 					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					var items = json ["items"] as List<object>;
-					foreach (Dictionary<string, object> webhook_json in items) {
-						// TODO: Do I need to reconvert this?
-						string reJsoned = Json.Serialize (webhook_json);
-						webhooks.Add(new Webhook (reJsoned));
+
+					// Check for Spark side errors
+					if (json.ContainsKey ("message")) {
+						error (new SparkMessage (json));
+						result (null);
+					} else {
+						// Convert to Membership objects
+						var webhooks = new List<Webhook> ();
+						var items = json ["items"] as List<object>;
+						foreach (var webhook in items) {
+							webhooks.Add (new Webhook (webhook as Dictionary<string, object>));
+						}
+						result (webhooks);
+						error (null);
 					}
-					callback (webhooks);
 				}
 			}
 		}
@@ -166,15 +210,28 @@ namespace Cisco.Spark {
 		/// </summary>
 		/// <returns>The webhook details.</returns>
 		/// <param name="webhookId">Webhook identifier.</param>
-		/// <param name="callback">Callback.</param>
-		public static IEnumerator GetWebhookDetails(string webhookId, Action<Webhook> callback) {
-			var manager = GameObject.FindObjectOfType<Request> ();
+		/// <param name="error">Error from Spark if any.</param>
+		/// <param name="result">Result Callback.</param>
+		public static IEnumerator GetWebhookDetails(string webhookId, Action<SparkMessage> error, Action<Webhook> result) {
+			Request manager = GameObject.FindObjectOfType<Request> ();
 			using (UnityWebRequest www = manager.Generate ("webhooks/" + webhookId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
+
 				if (www.isError) {
-					Debug.LogError ("Failed to Retrieve Webhook: " + www.error);
+					// Network error
+					Debug.LogError (www.error);
 				} else {
-					callback(new Webhook(www.downloadHandler.text));
+					// Parse Response
+					var webhookData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					if (webhookData.ContainsKey ("message")) {
+						// Error Callback
+						error (new SparkMessage (webhookData));
+						result(null);
+					} else {
+						// Result callback
+						error (null);
+						result(new Webhook (webhookData));
+					}
 				}
 			}
 		}
