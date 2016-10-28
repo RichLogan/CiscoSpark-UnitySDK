@@ -64,7 +64,7 @@ public class TestMessage : MonoBehaviour {
 						}
 					}, result => StartCoroutine (Message.GetMessageDetails (newMessage.Id, error => {
 						// This should error as the message has been deleted
-						Debug.Log ("Successfully failed to get delete message details");
+						Debug.Log ("Successfully failed to get deleted message details");
 						// Clean up test Room
 						StartCoroutine (testRoom.Delete (deleteError => {
 							if (deleteError != null) {

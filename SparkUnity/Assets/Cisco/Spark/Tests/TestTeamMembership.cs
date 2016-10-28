@@ -89,7 +89,7 @@ public class TestTeamMembership : MonoBehaviour {
 									Debug.LogError("Couldn't set moderator flag");
 									errorCount++;
 								} else {
-									Debug.Log("Edit Membership passed!");
+									Debug.Log("Edit Team Membership passed!");
 								}
 
 								// Clean up membership
