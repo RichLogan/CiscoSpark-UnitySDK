@@ -9,12 +9,7 @@ namespace Cisco.Spark {
 	public class Team {
 		public string Id { get; private set;}
 		public string Name { get; set;}
-		public string Created { get; private set;}
-
-		/// <summary>
-		/// Internal use only.
-		/// </summary>
-		protected Team() { }
+		public DateTime Created { get; private set;}
 
 		/// <summary>
 		/// Initialize a new instance of the <see cref="Cisco.Spark.Team"/> class locally.
@@ -28,22 +23,20 @@ namespace Cisco.Spark {
 		/// Initialize a new instance of the <see cref="Cisco.Spark.Team"/> class from
 		/// Spark (Not a constructor as usual due to parameter conflicts).
 		/// </summary>
-		/// <param name="json">Json.</param>
-		protected static Team FromSpark(string json) {
-			var team = new Team ();
-			var details = Json.Deserialize (json) as Dictionary<string, object>;
-			team.Id = (string) details ["id"];
-			team.Name = (string) details ["name"];
-			team.Created = (string) details ["created"];
-			return team;
+		/// <param name="details">Details from Spark.</param>
+		Team(Dictionary<string, object> details) {
+			Id = (string) details ["id"];
+			Name = (string) details ["name"];
+			Created = DateTime.Parse ((string) details ["created"]);
 		}
 
 		/// <summary>
 		/// Commit the current state of the local <see cref="Cisco.Spark.Team"/> object to Spark.
 		/// This will create a new <see cref="Cisco.Spark.Team"/> if it doesn't exist.
 		/// </summary>
-		/// <param name="callback">The created/updated <see cref="Cisco.Spark.Team"/> from Spark</param>
-		public IEnumerator Commit(Action<Team> callback) {
+		/// <param name="error">The error as <see cref="Cisco.Spark.SparkMessage"/> from Spark</param>
+		/// <param name="result">The created/updated <see cref="Cisco.Spark.Team"/> from Spark</param>
+		public IEnumerator Commit(Action<SparkMessage> error, Action<Team> result) {
 			// Setup request from current state of Team object
 			var manager = GameObject.FindObjectOfType<Request> ();
 
@@ -72,22 +65,45 @@ namespace Cisco.Spark {
 				if (www.isError) {
 					Debug.LogError("Failed to Create Team: " + www.error);
 				} else {
-					var team = Team.FromSpark (www.downloadHandler.text);
-					callback (team);
+					// Parse Response
+					var teamData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					if (teamData.ContainsKey ("message")) {
+						// Spark Error
+						error (new SparkMessage (teamData));
+						result (null);
+					} else {
+						// Create local Team object
+						error(null);
+						result(new Team (teamData));
+					}
 				}
 			}
 		}
 
 		/// <summary>
-		/// Delete this Team on the Spark service.
+		/// Delete the Team on Spark.
 		/// </summary>
-		public IEnumerator Delete() {
+		/// <param name="error">Error.</param>
+		/// <param name="result">Result.</param>
+		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
 			if (Id != null) {
 				var manager = GameObject.FindObjectOfType<Request> ();
 				using (UnityWebRequest www = manager.Generate ("teams/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
+						// Network Error
 						Debug.LogError ("Failed to Delete Team: " + www.error);
+					} else {
+						// Delete returns 204 on success
+						if (www.responseCode == 204) {
+							error (null);
+							result (true);
+						} else {
+							// Delete Failed
+							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+							error (new SparkMessage (json));
+							result (false);
+						}
 					}
 				}
 			}
@@ -97,9 +113,10 @@ namespace Cisco.Spark {
 		/// List the Teams the logged-in user is a member of.
 		/// </summary>
 		/// <returns>The Teams.</returns>
-		/// <param name="callback">Callback.</param>
+		/// <param name="result">Error from Spark (callback).</param>
+		/// <param name="result">List of teams (callback).</param>
 		/// <param name="max">Max number of Teams to return.</param>
-		public static IEnumerator ListTeams(Action<List<Team>> callback, int max = 0) {
+		public static IEnumerator ListTeams(Action<SparkMessage> error, Action<List<Team>> result, int max = 0) {
 			var manager = GameObject.FindObjectOfType<Request> ();
 
 			// Optional Parameters
@@ -114,38 +131,59 @@ namespace Cisco.Spark {
 			// Make Request
 			using (UnityWebRequest www = manager.Generate ("teams?" + queryString, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
+
 				if (www.isError) {
-					Debug.LogError ("Failed to List Teams");
+					// Network error
+					Debug.LogError("Failed to List Teams: " + www.error);
 				} else {
-					// Convert to Team objects
-					var teams = new List<Team> ();
+					// Request succeeded, parse response
 					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					var items = json ["items"] as List<object>;
-					foreach (var teamJson in items) {
-						string reJsoned = Json.Serialize (teamJson);
-						teams.Add(Team.FromSpark (reJsoned));
+
+					// Check for Spark side errors
+					if (json.ContainsKey ("message")) {
+						error (new SparkMessage (json));
+						result (null);
+					} else {
+						// Convert to Team objects
+						var teams = new List<Team> ();
+						var items = json ["items"] as List<object>;
+						foreach (var team in items) {
+							teams.Add (new Team (team as Dictionary<string, object>));
+						}
+						result (teams);
+						error (null);
 					}
-					callback (teams);
 				}
 			}
 		}
-
+			
 		/// <summary>
-		/// Retrieve a Team from Spark.
+		/// Gets the membership details.
 		/// </summary>
-		/// <returns>The Team</returns>
+		/// <returns>The membership details.</returns>
+		/// <param name="error">Error.</param>
+		/// <param name="result">Result.</param>
 		/// <param name="teamId">Team identifier.</param>
-		/// <param name="callback">Callback.</param>
-		static public IEnumerator GetTeamDetails(string teamId, Action<Team> callback) {
-			var manager = GameObject.FindObjectOfType<Request> ();
-			using (UnityWebRequest www = manager.Generate("teams/" + teamId, UnityWebRequest.kHttpVerbGET)) {
+		public static IEnumerator GetTeamDetails(string teamId, Action<SparkMessage> error, Action<Team> result) {
+			Request manager = GameObject.FindObjectOfType<Request> ();
+			using (UnityWebRequest www = manager.Generate ("teams/" + teamId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
+
 				if (www.isError) {
-					Debug.LogError ("Failed to Get Team Details: " + www.error);
-					callback (null);
+					// Network error
+					Debug.LogError (www.error);
 				} else {
-					var team = Team.FromSpark (www.downloadHandler.text);
-					callback (team);
+					// Parse Response
+					var teamData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					if (teamData.ContainsKey ("team")) {
+						// Error Callback
+						error (new SparkMessage (teamData));
+						result(null);
+					} else {
+						// Result callback
+						error (null);
+						result(new Team (teamData));
+					}
 				}
 			}
 		}

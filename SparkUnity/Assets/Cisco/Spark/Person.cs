@@ -10,7 +10,7 @@ namespace Cisco.Spark {
 		public string Id { get; private set;}
 		public string DisplayName { get; set;}
 		public string Avatar { get; set;}
-		public string Created { get; private set;}
+		public DateTime Created { get; private set;}
 		public List<string> Emails { get; set;}
 		public string Status { get; private set;}
 
@@ -18,15 +18,18 @@ namespace Cisco.Spark {
 		/// Initializes a new instance of the <see cref="Cisco.Spark.Person"/>
 		/// class from an existing Spark record
 		/// </summary>
-		/// <param name="json">JSON from Cisco Spark</param>
-		public Person(string json) {
-			var details = Json.Deserialize (json) as Dictionary<string, object>;
+		/// <param name="details">Person data from Cisco Spark</param>
+		Person(Dictionary<string, object> details) {
 			Id = (string) details ["id"];
 			DisplayName = (string) details ["displayName"];
 			Avatar = (string) details["avatar"];
-			// TODO: Created as DateTime
-			Created = (string) details ["created"];
-			Status = (string) details ["status"];
+			Created = DateTime.Parse ((string) details ["created"]);
+
+			// Status not always implemented
+			object status;
+			if (details.TryGetValue ("status", out status)) {
+				Status = (string) details ["status"];
+			}
 
 			object emails;
 			if (details.TryGetValue ("emails", out emails)) {
@@ -42,15 +45,24 @@ namespace Cisco.Spark {
 		/// Downloads the user's avatar as a Texture
 		/// </summary>
 		/// <returns>Texture of an avatar</returns>
+		/// <param name="error">Error if any from Spark</param>
 		/// <param name="callback">Callback.</param>
-		public IEnumerator DownloadAvatar(Action<Texture> callback) {
+		public IEnumerator DownloadAvatar(Action<SparkMessage> error, Action<Texture> callback) {
 			UnityWebRequest www = UnityWebRequest.GetTexture (Avatar);
 			yield return www.Send ();
 			if (www.isError) {
 				Debug.LogError ("Failed to Download Avatar: " + www.error);
 			} else {
-				Texture texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-				callback (texture);
+				var texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
+				if (texture) {
+					callback (texture);
+					error (null);
+				} else {
+					// TODO: Check what happens on failed avatar calls
+					Debug.LogError ("Download avatar failed. Check implementation.");
+					callback (null);
+					error (null);
+				}
 			}
 		}
 
@@ -58,9 +70,10 @@ namespace Cisco.Spark {
 		/// Gets details of the currently authenticated user from Spark.
 		/// </summary>
 		/// <returns>The Person object.</returns>
+		/// <param name="error">Error.</param>
 		/// <param name="callback">Callback.</param>
-		static public IEnumerator GetPersonDetails(Action<Person> callback) {
-			yield return GetPersonDetails ("me", callback);
+		static public IEnumerator GetPersonDetails(Action<SparkMessage> error, Action<Person> callback) {
+			yield return GetPersonDetails ("me", error, callback);
 		}
 
 		/// <summary>
@@ -68,17 +81,28 @@ namespace Cisco.Spark {
 		/// </summary>
 		/// <returns>The Person object</returns>
 		/// <param name="personId">Person identifier.</param>
-		/// <param name="callback">Callback.</param>
-		static public IEnumerator GetPersonDetails(string personId, Action<Person> callback) {
-			var manager = GameObject.FindObjectOfType<Request> ();
-			using (UnityWebRequest www = manager.Generate("people/" + personId, UnityWebRequest.kHttpVerbGET)) {
+		/// <param name="error">Error from Spark</param>
+		/// <param name="result">Callback.</param>
+		public static IEnumerator GetPersonDetails(string personId, Action<SparkMessage> error, Action<Person> result) {
+			Request manager = GameObject.FindObjectOfType<Request> ();
+			using (UnityWebRequest www = manager.Generate ("people/" + personId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
-				if (www.error == null) {
-					var person = new Person (www.downloadHandler.text);
-					callback (person);
+
+				if (www.isError) {
+					// Network error
+					Debug.LogError (www.error);
 				} else {
-					Debug.LogError ("Failed to Get Person Details: " + www.error);
-					callback (null);
+					// Parse Response
+					var personData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+					if (personData.ContainsKey ("message")) {
+						// Error Callback
+						error (new SparkMessage (personData));
+						result(null);
+					} else {
+						// Result callback
+						error (null);
+						result(new Person (personData));
+					}
 				}
 			}
 		}
@@ -87,11 +111,12 @@ namespace Cisco.Spark {
 		/// Lists the people matched by the query
 		/// </summary>
 		/// <returns>List of People</returns>
-		/// <param name="callback">Callback.</param>
-		/// <param name="email">Email to search on</param>
-		/// <param name="displayName">Display name to search on</param>
-		/// <param name="max">Max number of people to return</param>
-		public static IEnumerator ListPeople(Action<List<Person>> callback, string email = null, string displayName = null, int max = 0) {
+		/// <param name="error">Error from Spark.</param>
+		/// <param name="result">Callback.</param>
+		/// <param name="email">Email to search on.</param>
+		/// <param name="displayName">Display name to search on.</param>
+		/// <param name="max">Max number of people to return.</param>
+		public static IEnumerator ListPeople(Action<SparkMessage> error, Action<List<Person>> result, string email = null, string displayName = null, int max = 0) {
 			if (email == null && displayName == null) {
 				Debug.LogError ("Email or displayName should be specified.");
 			}
@@ -120,14 +145,20 @@ namespace Cisco.Spark {
 					Debug.LogError ("Failed to List People");
 				} else {
 					// Convert to Person objects
-					var people = new List<Person> ();
 					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					var items = json ["items"] as List<object>;
-					foreach (Dictionary<string, object> person_json in items) {
-						string reJsoned = Json.Serialize (person_json);
-						people.Add(new Person (reJsoned));
+					if (json.ContainsKey ("message")) {
+						error (new SparkMessage (json));
+						result (null);
+					} else {
+						// Convert to Membership objects
+						var people = new List<Person> ();
+						var items = json ["items"] as List<object>;
+						foreach (var person in items) {
+							people.Add (new Person (person as Dictionary<string, object>));
+						}
+						result (people);
+						error (null);
 					}
-					callback (people);
 				}
 			}
 		}

@@ -6,12 +6,12 @@ public class Request : MonoBehaviour {
 	public const string BaseUrl = "https://api.ciscospark.com/v1";
 	public string AuthenticationToken = "";
 
-	public UnityWebRequest Generate(string Resource, string RequestType) {
+	public UnityWebRequest Generate(string resource, string requestType) {
 		// Setup Headers
-		UnityWebRequest www = new UnityWebRequest (BaseUrl + "/" + Resource);
+		var www = new UnityWebRequest (BaseUrl + "/" + resource);
 		www.SetRequestHeader ("Authorization", "Bearer " + AuthenticationToken);
 		www.SetRequestHeader ("Content-type", "application/json; charset=utf-8");
-		www.method = RequestType;
+		www.method = requestType;
 		www.downloadHandler = new DownloadHandlerBuffer();
 		return www;
 	}
