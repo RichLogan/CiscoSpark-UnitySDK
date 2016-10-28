@@ -14,7 +14,7 @@ namespace Cisco.Spark {
 		public string PersonEmail { get; set;}
 		public bool IsModerator { get; set;}
 		public bool IsMonitor { get; set;}
-		public string Created { get; set;}
+		public DateTime Created { get; private set;}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Cisco.Spark.Membership"/> class.
@@ -48,7 +48,7 @@ namespace Cisco.Spark {
 				PersonDisplayName = membershipData ["personDisplayName"] as string;
 				IsModerator = (bool) membershipData ["isModerator"];
 				IsMonitor = (bool) membershipData ["isMonitor"];
-				Created = membershipData ["created"] as string;
+				Created = DateTime.Parse ((string) membershipData ["created"]);
 			} catch (KeyNotFoundException) {
 				Debug.Log ("Couldn't parse Membership");
 			}
@@ -61,7 +61,7 @@ namespace Cisco.Spark {
 		/// <param name="result">Result.</param>
 		public IEnumerator Commit(Action<SparkMessage> error, Action<Membership> result) {
 			// Setup request from current state of Room object
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = GameObject.FindObjectOfType<Request> ();
 
 			// Membership Data
 			var data = new Dictionary<string, string> ();

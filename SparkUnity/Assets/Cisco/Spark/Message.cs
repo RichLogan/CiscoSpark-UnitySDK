@@ -17,17 +17,24 @@ namespace Cisco.Spark {
 		public List<SparkFile> Files { get; set;}
 		public string PersonId { get; set;}
 		public string PersonEmail { get; set;}
-		public string Created { get; set;}
+		public DateTime Created { get; private set;}
+
+		/// <summary>
+		/// Initializes a new <see cref="Cisco.Spark.Message"/> locally. Use <see cref="Cisco.Spark.Message.Commit"/> to
+		/// save to the Spark service.
+		/// </summary>
+		public Message() { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Cisco.Spark.Message"/> class from a Spark API retrieval.
 		/// </summary>
 		/// <param name="data">Message data from Spark.</param>
-		public Message(Dictionary<string, object> data) {
+		Message(Dictionary<string, object> data) {
 			Id = data ["id"] as string;
 			RoomId = data ["roomId"] as string;
 			PersonId = data ["personId"] as string;
 			PersonEmail = data ["personEmail"] as string;
+			Created = DateTime.Parse ((string)data ["created"]);
 
 			// Handle Optionals
 			object toPersonId;
@@ -66,12 +73,6 @@ namespace Cisco.Spark {
 				}
 			}
 		}
-
-		/// <summary>
-		/// Initializes a new <see cref="Cisco.Spark.Message"/> locally. Use <see cref="Cisco.Spark.Message.Commit"/> to
-		/// save to the Spark service.
-		/// </summary>
-		public Message() { }
 
 		/// <summary>
 		/// Commits the current state of the local Room object to Spark.

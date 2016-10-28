@@ -10,7 +10,7 @@ namespace Cisco.Spark {
 		public string Id { get; private set;}
 		public string DisplayName { get; set;}
 		public string Avatar { get; set;}
-		public string Created { get; private set;}
+		public DateTime Created { get; private set;}
 		public List<string> Emails { get; set;}
 		public string Status { get; private set;}
 
@@ -19,12 +19,11 @@ namespace Cisco.Spark {
 		/// class from an existing Spark record
 		/// </summary>
 		/// <param name="details">Person data from Cisco Spark</param>
-		public Person(Dictionary<string, object> details) {
+		Person(Dictionary<string, object> details) {
 			Id = (string) details ["id"];
 			DisplayName = (string) details ["displayName"];
 			Avatar = (string) details["avatar"];
-			// TODO: Created as DateTime
-			Created = (string) details ["created"];
+			Created = DateTime.Parse ((string) details ["created"]);
 
 			// Status not always implemented
 			object status;

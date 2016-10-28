@@ -7,29 +7,13 @@ using MiniJSON;
 
 namespace Cisco.Spark {
 	public class Room {
-		public string Id { get; set; }
+		public string Id { get; private set; }
 		public string Title { get; set; }
 		public string RoomType { get; set;}
 		public bool IsLocked { get; set; }
 		public string TeamId { get; set; }
-		public DateTime Created { get; set; }
-		public DateTime LastActivity { get; set; }
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Room"/> class.
-		/// </summary>
-		/// <param name="data">Data.</param>
-		public Room(Dictionary<string, object> data) {
-			Id = (string)data ["id"];
-			Title = (string)data ["title"];
-			RoomType = (string)data ["type"];
-			IsLocked = (bool)data ["isLocked"];
-
-			object teamid;
-			if (data.TryGetValue ("teamId", out teamid)) {
-				TeamId = (string)teamid;
-			}
-		}
+		public DateTime Created { get; private set; }
+		public DateTime LastActivity { get; private set; }
 
 		/// <summary>
 		/// Initializes a local instance of the <see cref="Cisco.Spark.Room"/> class.
@@ -39,6 +23,25 @@ namespace Cisco.Spark {
 		public Room(string title, string teamId) {
 			Title = title;
 			TeamId = teamId;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Cisco.Spark.Room"/> class.
+		/// </summary>
+		/// <param name="data">Data.</param>
+		Room(Dictionary<string, object> data) {
+			Id = (string)data ["id"];
+			Title = (string)data ["title"];
+			RoomType = (string)data ["type"];
+			IsLocked = (bool)data ["isLocked"];
+
+			Created = DateTime.Parse ((string) data ["created"]);
+			LastActivity = DateTime.Parse ((string) data ["lastActivity"]);
+
+			object teamid;
+			if (data.TryGetValue ("teamId", out teamid)) {
+				TeamId = (string)teamid;
+			}
 		}
 
 		/// <summary>

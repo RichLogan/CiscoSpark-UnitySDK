@@ -4,18 +4,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using MiniJSON;
-using System.Runtime.Remoting.Messaging;
 
 namespace Cisco.Spark {
 	public class Team {
 		public string Id { get; private set;}
 		public string Name { get; set;}
-		public string Created { get; private set;}
-
-		/// <summary>
-		/// Internal use only.
-		/// </summary>
-		protected Team() { }
+		public DateTime Created { get; private set;}
 
 		/// <summary>
 		/// Initialize a new instance of the <see cref="Cisco.Spark.Team"/> class locally.
@@ -30,10 +24,10 @@ namespace Cisco.Spark {
 		/// Spark (Not a constructor as usual due to parameter conflicts).
 		/// </summary>
 		/// <param name="details">Details from Spark.</param>
-		protected Team(Dictionary<string, object> details) {
+		Team(Dictionary<string, object> details) {
 			Id = (string) details ["id"];
 			Name = (string) details ["name"];
-			Created = (string) details ["created"];
+			Created = DateTime.Parse ((string) details ["created"]);
 		}
 
 		/// <summary>
