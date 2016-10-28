@@ -3,8 +3,6 @@ Native Cisco Spark SDK for Unity 5.4+
 
 You can follow the progress + development of this here: https://trello.com/b/BvpwAZYd/unity-spark-sdk
 
-*Pre-release and under active development. Help and PRs welcome and needed!*
-
 Basic `TODO` list:
 - Better Testing
 - Inheritance rewrite
