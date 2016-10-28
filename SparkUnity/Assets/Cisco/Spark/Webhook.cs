@@ -7,7 +7,7 @@ using MiniJSON;
 
 namespace Cisco.Spark {
 	public class Webhook {
-		public string Id { get; set; }
+		public string Id { get; private set; }
 		public string Name { get; set; }
 		public string TargetUrl { get; set;}
 		public string Resource { get; set; }
@@ -17,7 +17,7 @@ namespace Cisco.Spark {
 		public string CreatedBy { get; set; }
 		public string AppId { get; set; }
 		public string Secret { get; set; }
-		public DateTime Created { get; set; }
+		public DateTime Created { get; private set; }
 
 
 		/// <summary>
