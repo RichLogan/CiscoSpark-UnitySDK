@@ -9,6 +9,8 @@ namespace Cisco.Spark {
 	public class Person {
 		public string Id { get; private set;}
 		public string DisplayName { get; set;}
+		public string FirstName { get; set;}
+		public string LastName { get; set;}
 		public string Avatar { get; set;}
 		public DateTime Created { get; private set;}
 		public List<string> Emails { get; set;}
@@ -22,6 +24,8 @@ namespace Cisco.Spark {
 		Person(Dictionary<string, object> details) {
 			Id = (string) details ["id"];
 			DisplayName = (string) details ["displayName"];
+			FirstName = (string) details ["firstName"];
+			LastName = (string) details ["lastName"];
 			Avatar = (string) details["avatar"];
 			Created = DateTime.Parse ((string) details ["created"]);
 

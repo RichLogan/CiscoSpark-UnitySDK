@@ -33,6 +33,16 @@ public class TestPerson : MonoBehaviour {
 					Debug.Log("Display name not retrieved correctly");
 				}
 
+				if (person.FirstName != "Rich") {
+					errorCount++;
+					Debug.Log("First name not retrieved correctly");
+				}
+
+				if (person.LastName != "Logan") {
+					errorCount++;
+					Debug.Log("Last name not retrieved correctly");
+				}
+
 				StartCoroutine (Person.GetPersonDetails (getPersonAgain => {
 					if (getPersonAgain != null) {
 						errorCount++;
