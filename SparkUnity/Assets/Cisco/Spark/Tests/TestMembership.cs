@@ -11,10 +11,8 @@ public class TestMembership : MonoBehaviour {
 		// Create a new room for testing
 		var testRoom = new Room ("Test Room (CiscoSpark-UnitySDK", null);
 		StartCoroutine (testRoom.Commit (error => {
-			if (error != null) {
-				Debug.LogError("Could not create target Room: " + error.Message);
-				errorCount++;
-			}
+			Debug.LogError("Could not create target Room: " + error.Message);
+			errorCount++;
 		}, room => {
 			Debug.Log("Created target Room!");
 			testRoom = room;
@@ -30,10 +28,8 @@ public class TestMembership : MonoBehaviour {
 
 			// Commit the membership to Spark
 			StartCoroutine (membership.Commit (commitError => {
-				if (commitError != null) {
-					Debug.LogError ("Couldn't commit membership: " + commitError.Message);
-					errorCount++;
-				}
+				Debug.LogError ("Couldn't commit membership: " + commitError.Message);
+				errorCount++;
 			}, commitResponse => {
 				Debug.Log("Created membership on Spark!");
 				membership = commitResponse;
@@ -45,20 +41,16 @@ public class TestMembership : MonoBehaviour {
 				// Try and commit empty membership
 				StartCoroutine (new Membership ().Commit (emptyCommitError => {
 					// This should error
-					if (emptyCommitError != null) {
-						if (!emptyCommitError.Message.Equals ("roomId cannot be null")) {
-							Debug.LogError ("Empty RoomId test failed");
-						}
+					if (!emptyCommitError.Message.Equals ("roomId cannot be null")) {
+						Debug.LogError ("Empty RoomId test failed: " + emptyCommitError.Message);
 					} else {
 						Debug.Log("Empty RoomId test passed!");
 					}
 
 					// Get Membership Details
 					StartCoroutine (Membership.GetMembershipDetails (membership.Id, membershipDetailsError => {
-						if (membershipDetailsError != null) {
-							Debug.LogError ("GetMembership Details failed: " + membershipDetailsError.Message);
-							errorCount++;
-						}
+						Debug.LogError ("GetMembership Details failed: " + membershipDetailsError.Message);
+						errorCount++;
 					}, membershipDetails => {
 						membership = membershipDetails;
 						if (membershipDetails.Id != membership.Id) {
@@ -70,20 +62,16 @@ public class TestMembership : MonoBehaviour {
 
 						// List Memberships
 						StartCoroutine (Membership.ListMemberships (listMembershipsError => {
-							if (listMembershipsError != null) {
-								Debug.LogError("Couldn't list memberships: " + listMembershipsError.Message);
-								errorCount++;
-							}
+							Debug.LogError("Couldn't list memberships: " + listMembershipsError.Message);
+							errorCount++;
 						}, memberships => {
 							Debug.Log("List Memberships passed!");
 
 							// Convert to moderator
 							membership.IsModerator = true;
 							StartCoroutine (membership.Commit(moderatedError => {
-								if (moderatedError != null) {
-									Debug.LogError("Couldn't set moderator flag: " + moderatedError.Message);
-									errorCount++;
-								}
+								Debug.LogError("Couldn't set moderator flag: " + moderatedError.Message);
+								errorCount++;
 							}, moderatedMembership => {
 								membership = moderatedMembership;
 								if (!membership.IsModerator) {
@@ -95,15 +83,11 @@ public class TestMembership : MonoBehaviour {
 
 								// Clean up membership
 								StartCoroutine (membership.Delete (deleteError => {
-									if (deleteError != null) {
-										Debug.Log("Couldn't delete membership: " + deleteError.Message);
-										errorCount++;
-									}
+									Debug.Log("Couldn't delete membership: " + deleteError.Message);
+									errorCount++;
 								}, deleted => StartCoroutine (testRoom.Delete (deleteRoomError => {
-									if (deleteRoomError != null) {
-										Debug.LogError ("Couldn't delete target Room: " + deleteRoomError.Message);
-										errorCount++;
-									}
+									Debug.LogError ("Couldn't delete target Room: " + deleteRoomError.Message);
+									errorCount++;
 								}, deleteRoom => {
 									if (errorCount > 0) {
 										Debug.LogError (errorCount + " tests failed");

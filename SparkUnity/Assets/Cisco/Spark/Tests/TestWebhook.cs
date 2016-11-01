@@ -9,10 +9,8 @@ public class TestWebhook : MonoBehaviour {
 
 		// List Webhooks
 		StartCoroutine (Webhook.ListWebhooks (listWebhookError => {
-			if (listWebhookError != null) {
-				errorCount++;
-				Debug.LogError ("List Webhooks failed: " + listWebhookError.Message);
-			}
+			errorCount++;
+			Debug.LogError ("List Webhooks failed: " + listWebhookError.Message);
 		}, webhooks => {
 			// List Webhooks Passed
 			var newWebhook = new Webhook (
@@ -23,10 +21,8 @@ public class TestWebhook : MonoBehaviour {
 				"86dacc007724d8ea666f88fc77d918dad9537a15"
 			);
 			StartCoroutine (newWebhook.Commit (commitError => {
-				if (commitError != null) {
-					errorCount++;
-					Debug.LogError("Create Webhook failed: " + commitError.Message);
-				}
+				errorCount++;
+				Debug.LogError("Create Webhook failed: " + commitError.Message);
 			}, commitedWebhook => {
 				newWebhook = commitedWebhook;
 				if (newWebhook.Id == null) {
@@ -36,10 +32,8 @@ public class TestWebhook : MonoBehaviour {
 					Debug.Log("Create Webhook Passed");
 					newWebhook.Name = "testingWebhookUpdated";
 					StartCoroutine (newWebhook.Commit (updateError => {
-						if (updateError != null) {
-							errorCount++;
-							Debug.Log("Update Webhook failed: " + updateError.Message);
-						}
+						errorCount++;
+						Debug.Log("Update Webhook failed: " + updateError.Message);
 					}, updatedWebhook => {
 						newWebhook = updatedWebhook;
 						if (newWebhook.Name != "testingWebhookUpdated") {
@@ -50,10 +44,8 @@ public class TestWebhook : MonoBehaviour {
 							Debug.Log("Update Webhook Passed");
 
 							StartCoroutine (Webhook.GetWebhookDetails (newWebhook.Id, detailsError => {
-								if (detailsError != null) {
-									errorCount++;
-									Debug.LogError("Couldn't get Webhook details: " + detailsError.Message);
-								}
+								errorCount++;
+								Debug.LogError("Couldn't get Webhook details: " + detailsError.Message);
 							}, webhook => {
 								if (newWebhook.Id != webhook.Id) {
 									errorCount++;
@@ -61,10 +53,8 @@ public class TestWebhook : MonoBehaviour {
 								} else {
 									// Details Passed
 									StartCoroutine (newWebhook.Delete (deleteError => {
-										if (deleteError != null) {
-											errorCount++;
-											Debug.LogError ("Delete Webhook failed: " + deleteError.Message);
-										}
+										errorCount++;
+										Debug.LogError ("Delete Webhook failed: " + deleteError.Message);
 									}, delete => {
 										// Finish and Report
 										if (errorCount == 0) {

@@ -15,10 +15,8 @@ public class TestMessage : MonoBehaviour {
 		var testRoom = new Room ("Test Room (CiscoSpark-UnitySDK", null);
 		StartCoroutine (testRoom.Commit (error => {
 			// Failed to create test room
-			if (error != null) {
-				errorCount++;
-				Debug.LogError("Couldn't create target Room");
-			}
+			errorCount++;
+			Debug.LogError("Couldn't create target Room");
 		}, room => {
 			// Test Room successful
 			testRoom = room;
@@ -34,19 +32,15 @@ public class TestMessage : MonoBehaviour {
 
 			// Commit Message
 			StartCoroutine (newMessage.Commit (error => {
-				if (error != null) {
-					errorCount++;
-					Debug.LogError("Couldn't commit Message: " + error.Message);
-				}
+				errorCount++;
+				Debug.LogError("Couldn't commit Message: " + error.Message);
 			}, message => {
 				newMessage = message;
 
 				// List Messages From Room
 				StartCoroutine (Message.ListMessages (testRoom.Id, error => {
-					if (error != null) {
-						errorCount++;
-						Debug.LogError("Couldn't list Messages: " + error.Message);
-					}
+					errorCount++;
+					Debug.LogError("Couldn't list Messages: " + error.Message);
 				}, messages => {
 					// Check Message was successful
 					if (messages [messages.Count - 1].Text != "Test message") {
@@ -58,19 +52,15 @@ public class TestMessage : MonoBehaviour {
 
 					// Delete the message
 					StartCoroutine (newMessage.Delete (error => {
-						if (error != null) {
-							errorCount++;
-							Debug.LogError("Couldn't delete message: " + error.Message);
-						}
+						errorCount++;
+						Debug.LogError("Couldn't delete message: " + error.Message);
 					}, result => StartCoroutine (Message.GetMessageDetails (newMessage.Id, error => {
 						// This should error as the message has been deleted
 						Debug.Log ("Successfully failed to get deleted message details");
 						// Clean up test Room
 						StartCoroutine (testRoom.Delete (deleteError => {
-							if (deleteError != null) {
-								errorCount++;
-								Debug.LogError ("Couldn't delete Test Room: " + deleteError.Message);
-							}
+							errorCount++;
+							Debug.LogError ("Couldn't delete Test Room: " + deleteError.Message);
 						}, delete => {
 							// Finish and Report
 							Debug.Log ("Finished Running Message Tests");

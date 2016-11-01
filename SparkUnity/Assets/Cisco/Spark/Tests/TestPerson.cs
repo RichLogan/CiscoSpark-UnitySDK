@@ -7,10 +7,8 @@ public class TestPerson : MonoBehaviour {
 		// Error Count
 		var errorCount = 0;
 		StartCoroutine (Person.ListPeople (listPeopleError => {
-			if (listPeopleError != null) {
-				errorCount++;
-				Debug.LogError("List people failed: " + listPeopleError.Message);
-			}
+			errorCount++;
+			Debug.LogError("List people failed: " + listPeopleError.Message);
 		}, people => {
 			if (people.Count != 1) {
 				errorCount++;
@@ -23,10 +21,8 @@ public class TestPerson : MonoBehaviour {
 			}
 
 			StartCoroutine (Person.GetPersonDetails (people[0].Id, getPersonError => {
-				if (getPersonError != null) {
-					errorCount++;
-					Debug.LogError("Get Person Details failed: " + getPersonError.Message);
-				}
+				errorCount++;
+				Debug.LogError("Get Person Details failed: " + getPersonError.Message);
 			},person => {
 				if (person.DisplayName != "Rich Logan") {
 					errorCount++;
@@ -44,18 +40,14 @@ public class TestPerson : MonoBehaviour {
 				}
 
 				StartCoroutine (Person.GetPersonDetails (getPersonAgain => {
-					if (getPersonAgain != null) {
-						errorCount++;
-						Debug.LogError("Get Person Details failed: " + getPersonAgain.Message);
-					}
+					errorCount++;
+					Debug.LogError("Get Person Details failed: " + getPersonAgain.Message);
 				}, callback => {
 					Debug.Log("Authenticated user is: " + callback.DisplayName);
 
 					StartCoroutine (person.DownloadAvatar (avatarError => {
-						if (avatarError != null) {
-							errorCount++;
-							Debug.LogError("List people failed: " + avatarError.Message);
-						}
+						errorCount++;
+						Debug.LogError("List people failed: " + avatarError.Message);
 					}, texture => {
 						if (texture.width <= 0) {
 							Debug.Log("Couldn't download user's avatar");
