@@ -60,11 +60,10 @@ namespace Cisco.Spark {
 				var texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
 				if (texture) {
 					callback (texture);
-					error (null);
 				} else {
 					// TODO: Check what happens on failed avatar calls
 					Debug.LogError ("Download avatar failed. Check implementation.");
-					callback (null);
+					Debug.LogError (www.downloadHandler.text);
 					error (null);
 				}
 			}
@@ -101,10 +100,8 @@ namespace Cisco.Spark {
 					if (personData.ContainsKey ("message")) {
 						// Error Callback
 						error (new SparkMessage (personData));
-						result(null);
 					} else {
 						// Result callback
-						error (null);
 						result(new Person (personData));
 					}
 				}
@@ -152,7 +149,6 @@ namespace Cisco.Spark {
 					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 					if (json.ContainsKey ("message")) {
 						error (new SparkMessage (json));
-						result (null);
 					} else {
 						// Convert to Membership objects
 						var people = new List<Person> ();
@@ -161,7 +157,6 @@ namespace Cisco.Spark {
 							people.Add (new Person (person as Dictionary<string, object>));
 						}
 						result (people);
-						error (null);
 					}
 				}
 			}

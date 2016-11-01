@@ -88,10 +88,8 @@ namespace Cisco.Spark {
 					var roomData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 					if (roomData.ContainsKey ("message")) {
 						error (new SparkMessage (roomData));
-						result (null);
 					} else {
 						result(new Room (roomData));
-						error (null);
 					}
 				}
 			}
@@ -112,13 +110,11 @@ namespace Cisco.Spark {
 					} else {
 						// Delete returns 204 on success
 						if (www.responseCode == 204) {
-							error (null);
 							result (true);
 						} else {
 							// Delete Failed
 							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 							error (new SparkMessage (json));
-							result (false);
 						}
 					}
 				}
@@ -162,7 +158,6 @@ namespace Cisco.Spark {
 					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 					if (json.ContainsKey ("message")) {
 						error (new SparkMessage(json));
-						result (null);
 					} else {
 						var rooms = new List<Room> ();
 						var items = json ["items"] as List<object>;
@@ -170,7 +165,6 @@ namespace Cisco.Spark {
 							rooms.Add(new Room (room_json));
 						}
 						result (rooms);
-						error (null);
 					}
 				}
 			}
@@ -193,10 +187,8 @@ namespace Cisco.Spark {
 					var roomDetails = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 					if (roomDetails.ContainsKey ("message")) {
 						error (new SparkMessage (roomDetails));
-						result (null);
 					} else {
 						result (new Room (roomDetails));
-						error (null);
 					}
 				}
 			}
