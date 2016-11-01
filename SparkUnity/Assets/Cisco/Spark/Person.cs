@@ -87,7 +87,7 @@ namespace Cisco.Spark {
 		/// <param name="error">Error from Spark</param>
 		/// <param name="result">Callback.</param>
 		public static IEnumerator GetPersonDetails(string personId, Action<SparkMessage> error, Action<Person> result) {
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			using (UnityWebRequest www = manager.Generate ("people/" + personId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 
@@ -122,7 +122,7 @@ namespace Cisco.Spark {
 				Debug.LogError ("Email or displayName should be specified.");
 			}
 
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 
 			// Optional Parameters
 			var data = new Dictionary<string, string> ();

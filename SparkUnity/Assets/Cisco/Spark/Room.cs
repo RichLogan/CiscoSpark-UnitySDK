@@ -51,7 +51,7 @@ namespace Cisco.Spark {
 		/// <param name="result">The resultant Spark Room.</param>
 		public IEnumerator Commit(Action<SparkMessage> error, Action<Room> result) {
 			// Setup request from current state of Room object
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 
 			// Room Data
 			var data = new Dictionary<string, string> ();
@@ -102,7 +102,7 @@ namespace Cisco.Spark {
 		/// <param name="result">Success/Fail.</param>
 		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
 			if (Id != null) {
-				var manager = GameObject.FindObjectOfType<Request> ();
+				var manager = Request.Instance;
 				using (UnityWebRequest www = manager.Generate ("rooms/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
@@ -132,7 +132,7 @@ namespace Cisco.Spark {
 		/// <param name="result">List of rooms.</param>
 		public static IEnumerator ListRooms(Action<SparkMessage> error, Action<List<Room>> result, string teamId = null, int max = 0, string type = null) {
 			// Build Request
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			var data = new Dictionary<string, string> ();
 
 			// Handle optional arguments
@@ -178,7 +178,7 @@ namespace Cisco.Spark {
 		/// <param name="error">Error from Spark, if any.</param>
 		/// <param name="result">The returned Room from Spark.</param>
 		public static IEnumerator GetRoomDetails(string roomId, Action<SparkMessage> error, Action<Room> result) {
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			using (UnityWebRequest www = manager.Generate ("rooms/" + roomId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.isError) {

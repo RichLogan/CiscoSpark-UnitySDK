@@ -2,9 +2,17 @@
 using UnityEngine.Networking;
 
 public class Request : MonoBehaviour {
+
+	// Singleton Request Instance
+	public static Request Instance;
+
 	// Publically Set Variables
 	public const string BaseUrl = "https://api.ciscospark.com/v1";
 	public string AuthenticationToken = "";
+
+	void Start() {
+		Instance = this;
+	}
 
 	public UnityWebRequest Generate(string resource, string requestType) {
 		// Setup Headers
