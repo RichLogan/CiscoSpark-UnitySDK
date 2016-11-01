@@ -6,10 +6,8 @@ public class TestTeam : MonoBehaviour {
 		var errorCount = 0;
 		// List Teams
 		StartCoroutine (Team.ListTeams (listError => {
-			if (listError != null) {
-				errorCount++;
-				Debug.LogError ("List Teams failed: " + listError.Message);
-			}
+			errorCount++;
+			Debug.LogError ("List Teams failed: " + listError.Message);
 		}, teams => {
 			if (teams.Count > 0) {
 				Debug.Log ("ListTeams passed");
@@ -20,10 +18,8 @@ public class TestTeam : MonoBehaviour {
 
 			// Get Team Details
 			StartCoroutine (Team.GetTeamDetails (teams[0].Id, detailsError => {
-				if (detailsError != null) {
-					errorCount++;
-					Debug.LogError ("List Teams failed: " + detailsError.Message);
-				}
+				errorCount++;
+				Debug.LogError ("List Teams failed: " + detailsError.Message);
 			}, retrievedTeam => {
 				if (retrievedTeam.Name != teams[0].Name) {
 					errorCount++;
@@ -36,10 +32,8 @@ public class TestTeam : MonoBehaviour {
 				const string OriginalName = "Unity SDK Test Team";
 				var t = new Team(OriginalName);
 				StartCoroutine (t.Commit (commitError => {
-					if (commitError != null) {
-						errorCount++;
-						Debug.LogError("GetTeamDetails failed: " + commitError.Message);	
-					}
+					errorCount++;
+					Debug.LogError("GetTeamDetails failed: " + commitError.Message);	
 				}, createdTeam => {
 					t = createdTeam;
 					if (t.Id == null) {
@@ -53,10 +47,8 @@ public class TestTeam : MonoBehaviour {
 					const string NewName = OriginalName + "RENAMED";
 					t.Name = NewName;
 					StartCoroutine (t.Commit (updateError => {
-						if (updateError != null) {
-							errorCount++;
-							Debug.LogError("Update failed: " + updateError.Message);
-						}
+						errorCount++;
+						Debug.LogError("Update failed: " + updateError.Message);
 					}, updatedTeam => {
 						t = updatedTeam;
 						if (t.Name != NewName) {
@@ -68,10 +60,8 @@ public class TestTeam : MonoBehaviour {
 
 						// Delete Team
 						StartCoroutine (t.Delete (deleteError => {
-							if (deleteError != null) {
-								errorCount++;
-								Debug.LogError("Delete team failed: " + deleteError.Message);
-							}
+							errorCount++;
+							Debug.LogError("Delete team failed: " + deleteError.Message);
 						}, deleteSuccess => {
 							// Error Report
 							if (errorCount > 0) {

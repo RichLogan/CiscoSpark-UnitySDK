@@ -99,10 +99,8 @@ namespace Cisco.Spark {
 					if (teamMembershipData.ContainsKey ("message")) {
 						// Spark Error
 						error (new SparkMessage (teamMembershipData));
-						result (null);
 					} else {
 						// Create local TeamMembership object
-						error(null);
 						result(new TeamMembership (teamMembershipData));
 					}
 				}
@@ -125,13 +123,11 @@ namespace Cisco.Spark {
 					} else {
 						// Delete returns 204 on success
 						if (www.responseCode == 204) {
-							error (null);
 							result (true);
 						} else {
 							// Delete Failed
 							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 							error (new SparkMessage (json));
-							result (false);
 						}
 					}
 				}
@@ -183,7 +179,6 @@ namespace Cisco.Spark {
 					// Check for Spark side errors
 					if (json.ContainsKey ("message")) {
 						error (new SparkMessage (json));
-						result (null);
 					} else {
 						// Convert to TeamMembership objects
 						var teamMemberships = new List<TeamMembership> ();
@@ -192,7 +187,6 @@ namespace Cisco.Spark {
 							teamMemberships.Add (new TeamMembership (teamMembership as Dictionary<string, object>));
 						}
 						result (teamMemberships);
-						error (null);
 					}
 				}
 			}
@@ -219,10 +213,8 @@ namespace Cisco.Spark {
 					if (teamMembershipData.ContainsKey ("message")) {
 						// Error Callback
 						error (new SparkMessage (teamMembershipData));
-						result(null);
 					} else {
 						// Result callback
-						error (null);
 						result(new TeamMembership (teamMembershipData));
 					}
 				}

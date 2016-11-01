@@ -70,10 +70,8 @@ namespace Cisco.Spark {
 					if (teamData.ContainsKey ("message")) {
 						// Spark Error
 						error (new SparkMessage (teamData));
-						result (null);
 					} else {
 						// Create local Team object
-						error(null);
 						result(new Team (teamData));
 					}
 				}
@@ -96,13 +94,11 @@ namespace Cisco.Spark {
 					} else {
 						// Delete returns 204 on success
 						if (www.responseCode == 204) {
-							error (null);
 							result (true);
 						} else {
 							// Delete Failed
 							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 							error (new SparkMessage (json));
-							result (false);
 						}
 					}
 				}
@@ -142,7 +138,6 @@ namespace Cisco.Spark {
 					// Check for Spark side errors
 					if (json.ContainsKey ("message")) {
 						error (new SparkMessage (json));
-						result (null);
 					} else {
 						// Convert to Team objects
 						var teams = new List<Team> ();
@@ -151,7 +146,6 @@ namespace Cisco.Spark {
 							teams.Add (new Team (team as Dictionary<string, object>));
 						}
 						result (teams);
-						error (null);
 					}
 				}
 			}
@@ -178,10 +172,8 @@ namespace Cisco.Spark {
 					if (teamData.ContainsKey ("team")) {
 						// Error Callback
 						error (new SparkMessage (teamData));
-						result(null);
 					} else {
 						// Result callback
-						error (null);
 						result(new Team (teamData));
 					}
 				}

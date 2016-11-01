@@ -131,10 +131,8 @@ namespace Cisco.Spark {
 					var messageData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 					if (messageData.ContainsKey ("message")) {
 						error (new SparkMessage (messageData));
-						result (null);
 					} else {
 						result(new Message (messageData));
-						error (null);
 					}
 				}
 			}
@@ -155,13 +153,11 @@ namespace Cisco.Spark {
 					} else {
 						// Delete returns 204 on success
 						if (www.responseCode == 204) {
-							error (null);
 							result (true);
 						} else {
 							// Delete Failed
 							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 							error (new SparkMessage (json));
-							result (false);
 						}
 					}
 				}
@@ -185,10 +181,8 @@ namespace Cisco.Spark {
 					var messageDetails = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 					if (messageDetails.ContainsKey ("message")) {
 						error (new SparkMessage (messageDetails));
-						result (null);
 					} else {
 						result (new Message (messageDetails));
-						error (null);
 					}
 				}
 			}
@@ -230,7 +224,6 @@ namespace Cisco.Spark {
 					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 					if (json.ContainsKey ("message")) {
 						error (new SparkMessage (json));
-						result (null);
 					} else {
 						var messages = new List<Message>();
 						var items = json ["items"] as List<object>;
@@ -238,7 +231,6 @@ namespace Cisco.Spark {
 							messages.Add (new Message (message_json));
 						}
 						result (messages);
-						error (null);
 					}
 				}
 			}

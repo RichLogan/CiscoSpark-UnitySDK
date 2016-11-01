@@ -10,10 +10,8 @@ public class TestTeamMembership : MonoBehaviour {
 
 		var testTeam = new Team ("SparkUnityTestTeam");
 		StartCoroutine (testTeam.Commit (error => {
-			if (error != null) {
-				Debug.LogError("Could not create target Team: " + error.Message);
-				errorCount++;
-			}
+			Debug.LogError("Could not create target Team: " + error.Message);
+			errorCount++;
 		}, team => {
 			Debug.Log("Created target Team!");
 			testTeam = team;
@@ -29,10 +27,8 @@ public class TestTeamMembership : MonoBehaviour {
 
 			// Commit the membership to Spark
 			StartCoroutine (teamMembership.Commit (commitError => {
-				if (commitError != null) {
-					Debug.LogError ("Couldn't commit team membership: " + commitError.Message);
-					errorCount++;
-				}
+				Debug.LogError ("Couldn't commit team membership: " + commitError.Message);
+				errorCount++;
 			}, commitResponse => {
 				Debug.Log("Created team membership on Spark!");
 				teamMembership = commitResponse;
@@ -44,20 +40,16 @@ public class TestTeamMembership : MonoBehaviour {
 				// Try and commit empty membership
 				StartCoroutine (new TeamMembership ().Commit (emptyCommitError => {
 					// This should error
-					if (emptyCommitError != null) {
-						if (!emptyCommitError.Message.Equals ("teamId cannot be null")) {
-							Debug.LogError ("Empty TeamId test failed");
-						}
+					if (!emptyCommitError.Message.Equals ("teamId cannot be null")) {
+						Debug.LogError ("Empty TeamId test failed: " + emptyCommitError.Message);
 					} else {
 						Debug.Log("Empty TeamId test passed!");
 					}
 
 					// Get Membership Details
 					StartCoroutine (TeamMembership.GetTeamMembershipDetails (teamMembership.Id, membershipDetailsError => {
-						if (membershipDetailsError != null) {
-							Debug.LogError ("Get Team Membership Details failed: " + membershipDetailsError.Message);
-							errorCount++;
-						}
+						Debug.LogError ("Get Team Membership Details failed: " + membershipDetailsError.Message);
+						errorCount++;
 					}, membershipDetails => {
 						teamMembership = membershipDetails;
 						if (membershipDetails.Id != teamMembership.Id) {
@@ -69,20 +61,16 @@ public class TestTeamMembership : MonoBehaviour {
 
 						// List Memberships
 						StartCoroutine (TeamMembership.ListTeamMemberships (listMembershipsError => {
-							if (listMembershipsError != null) {
-								Debug.LogError("Couldn't list team memberships: " + listMembershipsError.Message);
-								errorCount++;
-							}
+							Debug.LogError("Couldn't list team memberships: " + listMembershipsError.Message);
+							errorCount++;
 						}, memberships => {
 							Debug.Log("List Team Memberships passed!");
 
 							// Convert to moderator
 							teamMembership.IsModerator = true;
 							StartCoroutine (teamMembership.Commit(moderatedError => {
-								if (moderatedError != null) {
-									Debug.LogError("Couldn't set moderator flag: " + moderatedError.Message);
-									errorCount++;
-								}
+								Debug.LogError("Couldn't set moderator flag: " + moderatedError.Message);
+								errorCount++;
 							}, moderatedMembership => {
 								teamMembership = moderatedMembership;
 								if (!teamMembership.IsModerator) {
@@ -94,15 +82,11 @@ public class TestTeamMembership : MonoBehaviour {
 
 								// Clean up membership
 								StartCoroutine (teamMembership.Delete (deleteError => {
-									if (deleteError != null) {
-										Debug.Log("Couldn't delete membership: " + deleteError.Message);
-										errorCount++;
-									}
+									Debug.Log("Couldn't delete membership: " + deleteError.Message);
+									errorCount++;
 								}, deleted => StartCoroutine (testTeam.Delete (deleteTeamError => {
-									if (deleteTeamError != null) {
-										Debug.LogError ("Couldn't delete target Team: " + deleteTeamError.Message);
-										errorCount++;
-									}
+									Debug.LogError ("Couldn't delete target Team: " + deleteTeamError.Message);
+									errorCount++;
 								}, deleteTeam => {
 									if (errorCount > 0) {
 										Debug.LogError (errorCount + " tests failed");

@@ -12,10 +12,8 @@ public class TestRoom : MonoBehaviour {
 
 		// List Rooms
 		StartCoroutine (Room.ListRooms (listRoomsError => {
-			if (listRoomsError != null) {
-				Debug.LogError("Couldn't list Rooms: " + listRoomsError.Message);
-				errorCount++;
-			}	
+			Debug.LogError("Couldn't list Rooms: " + listRoomsError.Message);
+			errorCount++;
 		}, rooms => {
 			Debug.Log("List Rooms Passed!");
 			int startRoomCount = rooms.Count;
@@ -23,10 +21,8 @@ public class TestRoom : MonoBehaviour {
 			// Create New Room
 			var testRoom = new Room("Test Room (CiscoSpark-UnitySDK)", null);
 			StartCoroutine(testRoom.Commit (commitRoomError => {
-				if (commitRoomError != null) {
-					Debug.LogError("Couldn't commit Room: " + commitRoomError.Message);
-					errorCount++;
-				}
+				Debug.LogError("Couldn't commit Room: " + commitRoomError.Message);
+				errorCount++;
 			}, room => {
 				testRoom = room;
 				if (testRoom.Title != "Test Room (CiscoSpark-UnitySDK)") {
@@ -39,10 +35,8 @@ public class TestRoom : MonoBehaviour {
 				// Edit Room with Updated Title
 				testRoom.Title = "Updated Test Room (CiscoSpark-UnitySDK)";
 				StartCoroutine (testRoom.Commit(updateRoomError => {
-					if (updateRoomError != null) {
-						Debug.LogError("Couldn't update Room: " + updateRoomError.Message);
-						errorCount++;
-					}
+					Debug.LogError("Couldn't update Room: " + updateRoomError.Message);
+					errorCount++;
 				}, updatedRoom => {
 					testRoom = updatedRoom;
 					if (testRoom.Title != "Updated Test Room (CiscoSpark-UnitySDK)") {
@@ -54,10 +48,8 @@ public class TestRoom : MonoBehaviour {
 
 					// Get Room Details
 					StartCoroutine (Room.GetRoomDetails (testRoom.Id, roomDetailsError => {
-						if (roomDetailsError != null) {
-							Debug.LogError("Couldn't get Room details: " + roomDetailsError.Message);
-							errorCount++;
-						}
+						Debug.LogError("Couldn't get Room details: " + roomDetailsError.Message);
+						errorCount++;
 					}, retrivedRoom => {
 						testRoom = retrivedRoom;
 						if (testRoom.Title != "Updated Test Room (CiscoSpark-UnitySDK)") {
@@ -68,15 +60,11 @@ public class TestRoom : MonoBehaviour {
 
 						// Delete Room
 						StartCoroutine (testRoom.Delete (deleteRoomError => {
-							if (deleteRoomError != null) {
-								Debug.LogError("Couldn't get Room details: " + deleteRoomError.Message);
-								errorCount++;
-							}
+							Debug.LogError("Couldn't get Room details: " + deleteRoomError.Message);
+							errorCount++;
 						}, result => StartCoroutine (Room.ListRooms (listRoomsError => {
-							if (listRoomsError != null) {
-								Debug.LogError ("Couldn't list Rooms: " + listRoomsError.Message);
-								errorCount++;
-							}
+							Debug.LogError ("Couldn't list Rooms: " + listRoomsError.Message);
+							errorCount++;
 						}, postDeleteRooms => {
 							if (startRoomCount != postDeleteRooms.Count) {
 								Debug.LogError ("Delete Room Failed!");

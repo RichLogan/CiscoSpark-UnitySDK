@@ -120,10 +120,8 @@ namespace Cisco.Spark {
 					if (webhookData.ContainsKey ("message")) {
 						// Spark Error
 						error (new SparkMessage (webhookData));
-						result (null);
 					} else {
 						// Create local Membership object
-						error(null);
 						result(new Webhook (webhookData));
 					}
 				}
@@ -144,13 +142,11 @@ namespace Cisco.Spark {
 					} else {
 						// Delete returns 204 on success
 						if (www.responseCode == 204) {
-							error (null);
 							result (true);
 						} else {
 							// Delete Failed
 							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
 							error (new SparkMessage (json));
-							result (false);
 						}
 					}
 				}
@@ -190,7 +186,6 @@ namespace Cisco.Spark {
 					// Check for Spark side errors
 					if (json.ContainsKey ("message")) {
 						error (new SparkMessage (json));
-						result (null);
 					} else {
 						// Convert to Membership objects
 						var webhooks = new List<Webhook> ();
@@ -199,7 +194,6 @@ namespace Cisco.Spark {
 							webhooks.Add (new Webhook (webhook as Dictionary<string, object>));
 						}
 						result (webhooks);
-						error (null);
 					}
 				}
 			}
@@ -226,10 +220,8 @@ namespace Cisco.Spark {
 					if (webhookData.ContainsKey ("message")) {
 						// Error Callback
 						error (new SparkMessage (webhookData));
-						result(null);
 					} else {
 						// Result callback
-						error (null);
 						result(new Webhook (webhookData));
 					}
 				}

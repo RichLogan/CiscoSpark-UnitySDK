@@ -40,11 +40,9 @@ using Cisco.Spark;
 public class Spark : MonoBehaviour {
 	void Start() {
 		StartCoroutine (Room.ListRooms (error => {
-			if (error != null) {
-				Debug.LogError(error.Message);
-				foreach (var sparkError in error.Errors) {
-					Debug.LogError(sparkError.Description);
-				}
+			Debug.LogError(error.Message);
+			foreach (var sparkError in error.Errors) {
+				Debug.LogError(sparkError.Description);
 			}
 		}, rooms => {
 			foreach (var room in rooms) {
@@ -70,9 +68,7 @@ public class Spark : MonoBehaviour {
 	void Start() {
 		StartCoroutine (Message.ListMessages ("Y2lzY29zcGFyazovL3VzL1JPT00vMzFhOTVkYTAtZjgwYi0xMWU1LWIyMjgtNTk1Mjc3YjMwNDli",
 			error => {
-				if (error != null) {
-					Debug.LogError ("Failed: " + error.Message);
-				}
+				Debug.LogError ("Failed: " + error.Message);
 			},
 			messages => {
 				foreach (var message in messages) {
