@@ -32,7 +32,7 @@ namespace Cisco.Spark {
 		/// <param name="callback">File data as byte array</param>
 		/// <param name="forceBytes">Stops intelligent conversion of file array (e.g png -> Texture) and forces returning of a raw byte array. </param>
 		public IEnumerator Download(Action<object> callback, bool forceBytes = false) {
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			using (UnityWebRequest www = manager.Generate ("contents/" + Id, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.isError) {
@@ -64,7 +64,7 @@ namespace Cisco.Spark {
 		}
 
 		public IEnumerator GetHeaders(Action<Dictionary<string, string>> callback) {
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			using (UnityWebRequest www = manager.Generate ("contents/" + Id, UnityWebRequest.kHttpVerbHEAD)) {
 				yield return www.Send ();
 				if (www.isError) {

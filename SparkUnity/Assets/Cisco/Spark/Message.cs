@@ -82,7 +82,7 @@ namespace Cisco.Spark {
 		/// <param name="result">The created/updated Room from Spark.</param>
 		public IEnumerator Commit(Action<SparkMessage> error, Action<Message> result) {
 			// Setup request from current state of Room object
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 
 			// Message Data
 			var data = new Dictionary<string, string> ();
@@ -145,7 +145,7 @@ namespace Cisco.Spark {
 		/// <param name="result">Result.</param>
 		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
 			if (Id != null) {
-				var manager = GameObject.FindObjectOfType<Request> ();
+				var manager = Request.Instance;
 				using (UnityWebRequest www = manager.Generate ("messages/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
@@ -172,7 +172,7 @@ namespace Cisco.Spark {
 		/// <param name="error">Error.</param>
 		/// <param name="result">Result.</param>
 		public static IEnumerator GetMessageDetails(string messageId, Action<SparkMessage> error, Action<Message> result) {
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			using (UnityWebRequest www = manager.Generate ("messages/" + messageId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 				if (www.isError) {
@@ -199,7 +199,7 @@ namespace Cisco.Spark {
 		/// <param name="beforeMessage">List all messages before a specific message ID.</param>
 		/// <param name="max">Max number of messages.</param>
 		public static IEnumerator ListMessages(string roomId, Action<SparkMessage> error, Action<List<Message>> result, string before = null, string beforeMessage = null, int max = 0) {
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			var data = new Dictionary<string, string> ();
 			data ["roomId"] = roomId;
 

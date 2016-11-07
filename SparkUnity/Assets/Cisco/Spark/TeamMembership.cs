@@ -62,7 +62,7 @@ namespace Cisco.Spark {
 		/// <param name="error">Error.</param>
 		/// <param name="result">Result.</param>
 		public IEnumerator Commit(Action<SparkMessage> error, Action<TeamMembership> result) {
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 
 			// Membership Data
 			var data = new Dictionary<string, string> ();
@@ -114,7 +114,7 @@ namespace Cisco.Spark {
 		/// <param name="result">Result.</param>
 		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
 			if (Id != null) {
-				var manager = GameObject.FindObjectOfType<Request> ();
+				var manager = Request.Instance;
 				using (UnityWebRequest www = manager.Generate ("team/memberships/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
@@ -145,7 +145,7 @@ namespace Cisco.Spark {
 		/// <param name="personEmail">Person email.</param>
 		/// <param name="max">Max.</param>
 		public static IEnumerator ListTeamMemberships(Action<SparkMessage> error, Action<List<TeamMembership>> result, string teamId = null, string personId = null, string personEmail = null, int max = 0) {
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 
 			// Optional Parameters
 			var data = new Dictionary<string, string> ();
@@ -200,7 +200,7 @@ namespace Cisco.Spark {
 		/// <param name="result">Result.</param>
 		/// <param name="teamMembershipId">Membership identifier.</param>
 		public static IEnumerator GetTeamMembershipDetails(string teamMembershipId, Action<SparkMessage> error, Action<TeamMembership> result) {
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			Request manager = Request.Instance;
 			using (UnityWebRequest www = manager.Generate ("team/memberships/" + teamMembershipId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 

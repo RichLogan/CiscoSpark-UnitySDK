@@ -38,7 +38,7 @@ namespace Cisco.Spark {
 		/// <param name="result">The created/updated <see cref="Cisco.Spark.Team"/> from Spark</param>
 		public IEnumerator Commit(Action<SparkMessage> error, Action<Team> result) {
 			// Setup request from current state of Team object
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 
 			// Only sending / updating Team Name is currently supported
 			var data = new Dictionary<string, string> ();
@@ -85,7 +85,7 @@ namespace Cisco.Spark {
 		/// <param name="result">Result.</param>
 		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
 			if (Id != null) {
-				var manager = GameObject.FindObjectOfType<Request> ();
+				var manager = Request.Instance;
 				using (UnityWebRequest www = manager.Generate ("teams/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
@@ -113,7 +113,7 @@ namespace Cisco.Spark {
 		/// <param name="result">List of teams (callback).</param>
 		/// <param name="max">Max number of Teams to return.</param>
 		public static IEnumerator ListTeams(Action<SparkMessage> error, Action<List<Team>> result, int max = 0) {
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 
 			// Optional Parameters
 			var data = new Dictionary<string, string> ();
@@ -159,7 +159,7 @@ namespace Cisco.Spark {
 		/// <param name="result">Result.</param>
 		/// <param name="teamId">Team identifier.</param>
 		public static IEnumerator GetTeamDetails(string teamId, Action<SparkMessage> error, Action<Team> result) {
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			using (UnityWebRequest www = manager.Generate ("teams/" + teamId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 

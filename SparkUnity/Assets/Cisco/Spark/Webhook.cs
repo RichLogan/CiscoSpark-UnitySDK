@@ -74,7 +74,7 @@ namespace Cisco.Spark {
 		/// <param name="result">The created/updated Webhook from Spark (if any)</param>
 		public IEnumerator Commit(Action<SparkMessage> error, Action<Webhook> result) {
 			// Setup request from current state of Webhook object
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 
 			// Webhook Data
 			var data = new Dictionary<string, string> ();
@@ -133,7 +133,7 @@ namespace Cisco.Spark {
 		/// </summary>
 		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
 			if (Id != null) {
-				var manager = GameObject.FindObjectOfType<Request> ();
+				var manager = Request.Instance;
 				using (UnityWebRequest www = manager.Generate ("webhooks/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
 					yield return www.Send ();
 					if (www.isError) {
@@ -155,7 +155,7 @@ namespace Cisco.Spark {
 			
 		public static IEnumerator ListWebhooks(Action<SparkMessage> error, Action<List<Webhook>> result, string teamId = null, int max = 0, string type = null) {
 			// Build Request
-			var manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			var data = new Dictionary<string, string> ();
 
 			// Handle optional arguments
@@ -207,7 +207,7 @@ namespace Cisco.Spark {
 		/// <param name="error">Error from Spark if any.</param>
 		/// <param name="result">Result Callback.</param>
 		public static IEnumerator GetWebhookDetails(string webhookId, Action<SparkMessage> error, Action<Webhook> result) {
-			Request manager = GameObject.FindObjectOfType<Request> ();
+			var manager = Request.Instance;
 			using (UnityWebRequest www = manager.Generate ("webhooks/" + webhookId, UnityWebRequest.kHttpVerbGET)) {
 				yield return www.Send ();
 
