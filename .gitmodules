@@ -1,0 +1,3 @@
+[submodule "SparkUnity/Assets/Cisco/Spark/Plugins/ObjLoader"]
+	path = SparkUnity/Assets/Cisco/Spark/Plugins/ObjLoader
+	url = git@github.com:RichLogan/ObjLoader.git
