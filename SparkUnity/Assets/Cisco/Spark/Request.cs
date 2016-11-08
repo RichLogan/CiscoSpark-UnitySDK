@@ -10,7 +10,7 @@ public class Request : MonoBehaviour {
 	public const string BaseUrl = "https://api.ciscospark.com/v1";
 	public string AuthenticationToken = "";
 
-	void Start() {
+	void Awake() {
 		Instance = this;
 	}
 
