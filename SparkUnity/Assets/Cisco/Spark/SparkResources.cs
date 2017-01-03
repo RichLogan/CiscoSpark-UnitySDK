@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using MiniJSON;
+using System.IO;
 
 namespace Cisco.Spark {
 
@@ -21,20 +23,18 @@ namespace Cisco.Spark {
 		public static SparkResources Instance;
 
 		/// <summary>
-		/// Mapping of SparkType for single operation URL enpoints.
+		/// Mapping of SparkType to URL endpoints.
 		/// </summary>
-		public Dictionary<SparkType, string> Single;
+		public Dictionary<SparkType, string> UrlEndpoints;
 
-		/// <summary>
-		/// Mapping of SparkType for single operation URL enpoints.
-		/// </summary>
-		public Dictionary<SparkType, string> Multiple;
+		public Dictionary<string, object> ApiConstraints;
 	
 		void Awake() {
 			// Singleton.
 			Instance = this;
 
-			Multiple = new Dictionary<SparkType, string> {
+			// Spark Type URL Endpoints.
+			UrlEndpoints = new Dictionary<SparkType, string> {
 				{ SparkType.Membership, "memberships" },
 				{ SparkType.Room, "rooms" },
 				{ SparkType.Person, "people" },
@@ -43,6 +43,14 @@ namespace Cisco.Spark {
 				{ SparkType.Message, "messages" },
 				{ SparkType.Webhook, "webhooks" },
 			};
+
+			// Load API Constraints from resource file.
+			string contents;
+			using (var streamReader = new StreamReader("Assets/Cisco/Spark/ApiConstraints.json")) {
+				contents = streamReader.ReadToEnd();
+			}
+			ApiConstraints = Json.Deserialize(contents) as Dictionary<string, object>;
+			ApiConstraints = ApiConstraints["apiConstraints"] as Dictionary<string, object>;
 		}
 	}
 }

@@ -1,0 +1,23 @@
+{
+    "apiConstraints": {
+        "rooms": {
+            "create": [
+                "title",
+                "teamId"
+            ],
+            "update": [
+                "title"
+            ]
+        },
+        "memberships": {
+            "create": [
+                "roomId",
+                "personId",
+                "isModerator"
+            ],
+            "update": [
+                "isModerator"
+            ]
+        }
+    }
+}
