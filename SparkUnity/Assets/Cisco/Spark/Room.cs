@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System;
 
 namespace Cisco.Spark
@@ -39,6 +40,8 @@ namespace Cisco.Spark
         {
             get { return SparkType.Room; }
         }
+
+        public Room() { }
 
         /// <summary>
         /// Constructor to build representation of existing Spark-side Room.
@@ -85,6 +88,28 @@ namespace Cisco.Spark
             IsLocked = (bool)data["isLocked"];
             LastActivity = DateTime.Parse(data["lastActivity"] as string);
             Creator = new Person(data["creatorId"] as string);
+        }
+
+        public static IEnumerator ListRooms(Action<SparkMessage> error, Action<List<Room>> results, Team team = null, int max = 0, RoomType type = RoomType.Unsupported)
+        {
+            var constraints = new Dictionary<string, string>();
+            if (team != null)
+            {
+                constraints.Add("teamId", team.Id);
+            }
+
+            if (max > 0)
+            {
+                constraints.Add("max", max.ToString());
+            }
+
+            if (type != RoomType.Unsupported)
+            {
+                constraints.Add("type", RoomTypeLookup.ToApi(type));
+            }
+
+            var listObjects = ListObjects<Room>(constraints, SparkType.Room, error, results);
+            yield return Request.Instance.StartCoroutine(listObjects);
         }
     }
 }

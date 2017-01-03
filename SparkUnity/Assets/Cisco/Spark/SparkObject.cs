@@ -24,7 +24,8 @@ namespace Cisco.Spark
         /// </summary>
         /// <param name="error">Error from Spark, if any.</param>
         /// <param name="success">Callback for completion.</param>
-        public IEnumerator Commit(Action<SparkMessage> error, Action<bool> success) {
+        public IEnumerator Commit(Action<SparkMessage> error, Action<bool> success)
+        {
             if (Id == null)
             {
                 // Create new record.
@@ -81,12 +82,13 @@ namespace Cisco.Spark
         /// </summary>
         /// <returns>The Dictionary.</returns>
         /// <param name="fields">A specific list of fields to serialise.</param>
-        protected virtual Dictionary<string, object> ToDict(List<string> fields = null) {
-			var data = new Dictionary<string, object>();
-			data["id"] = Id;
-			data["created"] = Created;
-			return data;
-		}
+        protected virtual Dictionary<string, object> ToDict(List<string> fields = null)
+        {
+            var data = new Dictionary<string, object>();
+            data["id"] = Id;
+            data["created"] = Created;
+            return data;
+        }
 
         /// <summary>
         /// Populates an object with data retrieved from Spark.
@@ -94,46 +96,71 @@ namespace Cisco.Spark
         /// <param name="data">Data.</param>
         protected virtual void LoadDict(Dictionary<string, object> data)
         {
-            if (data.ContainsKey("message")) {
+            if (data.ContainsKey("message"))
+            {
                 var message = new SparkMessage(data);
                 throw new Exception(message.Message);
             }
-            
+
             Id = data["id"] as string;
             Created = DateTime.Parse(data["created"] as string);
         }
 
-        protected Dictionary<string, object> CleanDict(Dictionary<string, object> data, List<string> fields) {
-			if (fields != null) {
+        protected Dictionary<string, object> CleanDict(Dictionary<string, object> data, List<string> fields)
+        {
+            if (fields != null)
+            {
                 var buffer = new List<string>(data.Keys);
-				foreach (var key in buffer) {
-					if (!fields.Contains (key)) {
-						data.Remove (key);
-					}
-				}
-				return data;
-			}
-			return data;
-		}
+                foreach (var key in buffer)
+                {
+                    if (!fields.Contains(key))
+                    {
+                        data.Remove(key);
+                    }
+                }
+                return data;
+            }
+            return data;
+        }
 
         /// <summary>
         /// Returns the list of fields that the API accepts for a given operation.
         /// </summary>
         /// <param name="updateCreate">'update' or 'create' operation.</param>
         /// <returns>The list of fields.</returns>
-        protected List<string> RetrieveConstraints(string updateCreate) {            
+        protected List<string> RetrieveConstraints(string updateCreate)
+        {
             // Retrieve constraints.
             var lookupKey = SparkResources.Instance.UrlEndpoints[SparkType];
             var resourceConstraints = SparkResources.Instance.ApiConstraints[lookupKey] as Dictionary<string, object>;
             var requestedConstraints = resourceConstraints[updateCreate] as List<object>;
-            
+
             // Build up / return results.
             var results = new List<string>();
-            foreach (var constraint in requestedConstraints) {
-                var value = (string) constraint;
+            foreach (var constraint in requestedConstraints)
+            {
+                var value = (string)constraint;
                 results.Add(value);
             }
             return results;
+        }
+
+        public static IEnumerator ListObjects<T>(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<T>> result) where T : SparkObject, new()
+        {
+            var listRoutine = Request.Instance.ListRecords(constraints, type, error, success =>
+            {
+                List<T> retrivedObjects = new List<T>();
+                foreach (var sparkObject in success)
+                {
+                    var details = sparkObject as Dictionary<string, object>;
+                    var newSparkObject = new T();
+                    newSparkObject.Id = details["id"] as string;
+                    newSparkObject.LoadDict(details);
+                    retrivedObjects.Add(newSparkObject);
+                }
+                result(retrivedObjects);
+            });
+            yield return Request.Instance.StartCoroutine(listRoutine);
         }
     }
 }

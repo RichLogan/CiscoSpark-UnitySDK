@@ -197,5 +197,35 @@ namespace Cisco.Spark
                 }
             }
         }
+
+        public IEnumerator ListRecords(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<object>> result)
+        {
+            string queryString = System.Text.Encoding.UTF8.GetString(UnityWebRequest.SerializeSimpleForm(constraints));
+            string url = string.Format("{0}?{1}", SparkResources.Instance.UrlEndpoints[type], queryString);
+            using (var www = Generate(url, UnityWebRequest.kHttpVerbGET))
+            {
+                yield return www.Send();
+
+                if (www.isError)
+                {
+                    Debug.LogError("Couldn't connect to Spark: " + www.error);
+                }
+                else
+                {
+                    var returnedData = Json.Deserialize(www.downloadHandler.text) as Dictionary<string, object>;
+                    if (returnedData.ContainsKey("message"))
+                    {
+                        // Spark side error.
+                        error(new SparkMessage(returnedData));
+                    }
+                    else
+                    {
+                        // Returned data.
+                        var items = returnedData["items"] as List<object>;
+                        result(items);
+                    }
+                }
+            }
+        }
     }
 }
