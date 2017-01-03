@@ -41,8 +41,6 @@ namespace Cisco.Spark
             get { return SparkType.Room; }
         }
 
-        public Room() { }
-
         /// <summary>
         /// Constructor to build representation of existing Spark-side Room.
         /// Use Load() to populate rest of properties from Spark.

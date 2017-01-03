@@ -145,7 +145,7 @@ namespace Cisco.Spark
             return results;
         }
 
-        public static IEnumerator ListObjects<T>(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<T>> result) where T : SparkObject, new()
+        public static IEnumerator ListObjects<T>(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<T>> result) where T : SparkObject
         {
             var listRoutine = Request.Instance.ListRecords(constraints, type, error, success =>
             {
@@ -153,8 +153,7 @@ namespace Cisco.Spark
                 foreach (var sparkObject in success)
                 {
                     var details = sparkObject as Dictionary<string, object>;
-                    var newSparkObject = new T();
-                    newSparkObject.Id = details["id"] as string;
+                    var newSparkObject = (T)Activator.CreateInstance(typeof(T), details["id"] as string);
                     newSparkObject.LoadDict(details);
                     retrivedObjects.Add(newSparkObject);
                 }
