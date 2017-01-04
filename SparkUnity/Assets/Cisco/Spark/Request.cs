@@ -10,17 +10,45 @@ namespace Cisco.Spark
     public class Request : MonoBehaviour
     {
 
-        // Singleton Request Instance.
+        /// <summary>
+        /// Singleton for a Request instance.
+        /// </summary>
         public static Request Instance;
 
-        // Publically Set Variables.
+        /// <summary>
+        /// Base URL for the Spark API.
+        /// </summary>
         public const string BaseUrl = "https://api.ciscospark.com/v1";
+
+        /// <summary>
+        /// The authentication token to make requests with.
+        /// The Person (or bot) associated with this token is stored in <see cref="Person.AuthenticatedUser"/>.
+        /// </summary>
         public string AuthenticationToken = "";
 
+        /// <summary>
+        /// True if initial Setup has completed.
+        /// Calls using <see cref="Person.AuthenticatedUser"/> must wait for this to be true.
+        /// </summary>
+        public bool SetupComplete { get; private set; }
+
+        /// <summary>
+        /// Request setup should run as early as possible, in case requests are made on Start() elsewhere.
+        /// </summary>
         void Awake()
         {
             // Assign singleton.
             Instance = this;
+
+            // Reference to Authenticated User.
+            StartCoroutine(Person.GetMyself(error =>
+            {
+                Debug.LogError("Couldn't set the Authenticated User");
+            }, success =>
+            {
+                SetupComplete = true;
+                Debug.Log("Cisco Spark SDK Ready! Authenticated as: " + Person.AuthenticatedUser.DisplayName);
+            }));
         }
 
         /// <summary>
