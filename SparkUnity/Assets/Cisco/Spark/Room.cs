@@ -88,6 +88,14 @@ namespace Cisco.Spark
             Creator = new Person(data["creatorId"] as string);
         }
 
+        /// <summary>
+        /// Lists all Rooms the registered user is a member of, matching the given filters.
+        /// </summary>
+        /// <param name="error">Error from Spark, if any.</param>
+        /// <param name="results">The restulting list of Rooms.</param>
+        /// <param name="team">The Team to filter on.</param>
+        /// <param name="max">The maximum number of rooms to return.</param>
+        /// <param name="type">The RoomType of Room to look for.</param>
         public static IEnumerator ListRooms(Action<SparkMessage> error, Action<List<Room>> results, Team team = null, int max = 0, RoomType type = RoomType.Unsupported)
         {
             var constraints = new Dictionary<string, string>();

@@ -16,6 +16,9 @@ namespace Cisco.Spark
         /// </summary>
         public DateTime Created { get; internal set; }
 
+        /// <summary>
+        /// The SparkType the implementation represents.
+        /// </summary>
         internal abstract SparkType SparkType { get; }
 
         /// <summary>
@@ -93,7 +96,7 @@ namespace Cisco.Spark
         /// <summary>
         /// Populates an object with data retrieved from Spark.
         /// </summary>
-        /// <param name="data">Data.</param>
+        /// <param name="data">Deserialised data dictionary from Spark.</param>
         protected virtual void LoadDict(Dictionary<string, object> data)
         {
             if (data.ContainsKey("message"))
@@ -106,6 +109,13 @@ namespace Cisco.Spark
             Created = DateTime.Parse(data["created"] as string);
         }
 
+        /// <summary>
+        /// Removes any fields in a dictionary that don't match the list of keys given in paramref name="fields".
+        /// Primarily used to clean the searilised objects ready for a Create/Update request to Spark.
+        /// </summary>
+        /// <param name="data">The dictionary to clean.</param>
+        /// <param name="fields">The list of fields to keep.</param>
+        /// <returns></returns>
         protected Dictionary<string, object> CleanDict(Dictionary<string, object> data, List<string> fields)
         {
             if (fields != null)
@@ -145,6 +155,14 @@ namespace Cisco.Spark
             return results;
         }
 
+        /// <summary>
+        /// Returns a list of a given SparkObject type matching the API constraints offered.
+        /// </summary>
+        /// <param name="constraints">Dictionary of URL constraints the request takes.</param>
+        /// <param name="type">The SparkType being searched.</param>
+        /// <param name="error">The error from Spark, if any.</param>
+        /// <param name="result">The resultant list of the given SparkObject typeparamref name="T".</param>
+        /// <typeparam name="T">The SparkObject child being searched for.</param>
         public static IEnumerator ListObjects<T>(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<T>> result) where T : SparkObject
         {
             var listRoutine = Request.Instance.ListRecords(constraints, type, error, success =>
