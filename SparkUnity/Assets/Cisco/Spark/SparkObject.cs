@@ -142,18 +142,34 @@ namespace Cisco.Spark
         protected List<string> RetrieveConstraints(string updateCreate)
         {
             // Retrieve constraints.
-            var lookupKey = SparkResources.Instance.UrlEndpoints[SparkType];
-            var resourceConstraints = SparkResources.Instance.ApiConstraints[lookupKey] as Dictionary<string, object>;
-            var requestedConstraints = resourceConstraints[updateCreate] as List<object>;
-
-            // Build up / return results.
-            var results = new List<string>();
-            foreach (var constraint in requestedConstraints)
+            try
             {
-                var value = (string)constraint;
-                results.Add(value);
+                var lookupKey = SparkResources.Instance.UrlEndpoints[SparkType];
+                try
+                {
+                    var resourceConstraints = SparkResources.Instance.ApiConstraints[lookupKey] as Dictionary<string, object>;
+                    var requestedConstraints = resourceConstraints[updateCreate] as List<object>;
+
+                    // Build up / return results.
+                    var results = new List<string>();
+                    foreach (var constraint in requestedConstraints)
+                    {
+                        var value = (string)constraint;
+                        results.Add(value);
+                    }
+                    return results;
+                }
+                catch (KeyNotFoundException)
+                {
+                    throw new Exception("This SparkType has no supported fields in ApiConstraints.");
+                }
             }
-            return results;
+            catch (KeyNotFoundException)
+            {
+                throw new Exception("This SparkType has no registered URL Endpoint in SparkResources.");
+            }
+
+
         }
 
         /// <summary>
