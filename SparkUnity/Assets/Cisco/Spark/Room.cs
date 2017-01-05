@@ -62,6 +62,58 @@ namespace Cisco.Spark
             Team = team;
         }
 
+
+        /// <summary>
+        /// Lists all Messages in the Room matching the given constraints.
+        /// </summary>
+        /// <param name="error">Error callback from Spark, if any.</param>
+        /// <param name="results">Results callback.</param>
+        /// <param name="mentionedPeople">Will only return messages where these people are mentioned.</param>
+        /// <param name="before">Will only return messages before this DateTime.</param>
+        /// <param name="beforeMessage">Will only return messages before this Message was posted.</param>
+        /// <param name="max">Maximum number of messages to return.</param>
+        public IEnumerator ListMessages(Action<SparkMessage> error, Action<List<Message>> results, List<Person> mentionedPeople = null, DateTime? before = null, Message beforeMessage = null, int max = 0)
+        {
+            // Room must exist on Spark.
+            if (Id == null)
+            {
+                throw new Exception("Room ID must be set before listing messages.");
+            }
+
+            // Search constraints.
+            var constraints = new Dictionary<string, string>();
+            constraints["roomId"] = Id;
+
+            if (mentionedPeople != null)
+            {
+                var serialisedString = new List<string>();
+                foreach (var person in mentionedPeople)
+                {
+                    serialisedString.Add(person.Id);
+                }
+                var queryString = MiniJSON.Json.Serialize(serialisedString);
+                constraints["mentionedPeople"] = queryString;
+            }
+
+            if (before != null)
+            {
+                constraints["before"] = before.ToString();
+            }
+
+            if (beforeMessage != null)
+            {
+                constraints["beforeMessage"] = beforeMessage.Id;
+            }
+
+            if (max > 0)
+            {
+                constraints["max"] = max.ToString();
+            }
+
+            var listObjects = ListObjects<Message>(constraints, SparkType.Message, error, results);
+            yield return Request.Instance.StartCoroutine(listObjects);
+        }
+
         /// <summary>
         /// Returns a dictionary representation of the object.
         /// </summary>

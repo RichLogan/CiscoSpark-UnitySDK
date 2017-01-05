@@ -4,6 +4,8 @@ using Cisco.Spark;
 public class TestRoom : MonoBehaviour
 {
 
+    public string TestRoomId = "";
+
     // Use this for initialization
     void Start()
     {
@@ -80,7 +82,7 @@ public class TestRoom : MonoBehaviour
         {
             // Check room was deleted successfully.
             var checkDeletedRoom = new Room(room.Id);
-            StartCoroutine(room.Load(error =>
+            StartCoroutine(checkDeletedRoom.Load(error =>
             {
                 Debug.Log("Delete Room passed!");
                 ListRooms();
@@ -101,7 +103,46 @@ public class TestRoom : MonoBehaviour
             if (results.Count > 0)
             {
                 Debug.Log("List Rooms Passed!");
+                ListMessages();
             }
         }));
+    }
+
+    void ListMessages()
+    {
+        var check = false;
+        var room = new Room(TestRoomId);
+        var listMessages = room.ListMessages(error =>
+        {
+            Debug.LogError("Failed to list messages: " + error.Message);
+        }, results =>
+        {
+            if (results.Count > 0)
+            {
+                foreach (var message in results)
+                {
+                    Debug.Log(message.Text);
+                    if (message.Text != null)
+                    {
+                        check = true;
+                    }
+                }
+
+                if (check)
+                {
+                    Debug.Log("List Messages Passed");
+                    return;
+                }
+                else
+                {
+                    Debug.LogError("List Messages failed");
+                }
+            }
+            else
+            {
+                Debug.LogError("List Messages failed");
+            }
+        });
+        StartCoroutine(listMessages);
     }
 }

@@ -1,239 +1,167 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using MiniJSON;
-using UnityEngine;
-using UnityEngine.Networking;
 
-namespace Cisco.Spark {
-	public class Message {
-		public string Id { get; set;}
-		public string RoomId { get; set;}
-		public string ToPersonId { get; set;}
-		public string ToPersonEmail { get; set;}
-		public string Text { get; set;}
-		public string Markdown { get; set;}
-		public string Html { get; set;}
-		public List<SparkFile> Files { get; set;}
-		public string PersonId { get; set;}
-		public string PersonEmail { get; set;}
-		public DateTime Created { get; private set;}
+namespace Cisco.Spark
+{
+    public class Message : SparkObject
+    {
+        /// <summary>
+        /// SparkType the implementation represents.
+        /// </summary>
+        internal override SparkType SparkType
+        {
+            get { return SparkType.Message; }
+        }
 
-		/// <summary>
-		/// Initializes a new <see cref="Cisco.Spark.Message"/> locally. Use <see cref="Cisco.Spark.Message.Commit"/> to
-		/// save to the Spark service.
-		/// </summary>
-		public Message() { }
+        /// <summary>
+        /// The Room the message belongs to if it is a general message.
+        /// </summary>
+        public Room Room { get; set; }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Message"/> class from a Spark API retrieval.
-		/// </summary>
-		/// <param name="data">Message data from Spark.</param>
-		Message(Dictionary<string, object> data) {
-			Id = data ["id"] as string;
-			RoomId = data ["roomId"] as string;
-			PersonId = data ["personId"] as string;
-			PersonEmail = data ["personEmail"] as string;
-			Created = DateTime.Parse ((string)data ["created"]);
+        /// <summary>
+        /// The recipient if the message is a 1:1 room / direct message.
+        /// </summary>
+        public Person Recipient { get; set; }
 
-			// Handle Optionals
-			object toPersonId;
-			if (data.TryGetValue ("toPersonId", out toPersonId)) {
-				ToPersonId = toPersonId as string;
-			}
+        /// <summary>
+        /// The author of the message.
+        /// </summary>
+        public Person Author { get; set; }
 
-			object toPersonEmail;
-			if (data.TryGetValue ("toPersonEmail", out toPersonEmail)) {
-				ToPersonEmail = toPersonEmail as string;
-			}
+        /// <summary>
+        /// The plain text of the message.
+        /// </summary>
+        public string Text { get; set; }
 
-			object text;
-			if (data.TryGetValue ("text", out text)) {
-				Text = text as string;
-			}
+        /// <summary>
+        /// The message in Markdown form.
+        /// </summary>
+        public string Markdown { get; set; }
 
-			object markdown;
-			if (data.TryGetValue ("markdown", out markdown)) {
-				Markdown = markdown as string;
-			}
+        /// <summary>
+        /// The message in HTML form.
+        /// </summary>
+        public string Html { get; set; }
 
-			object html;
-			if (data.TryGetValue ("html", out html)) {
-				Html = html as string;
-			}
+        /// <summary>
+        /// List of uploaded files attached with the message.
+        /// </summary>
+        public List<SparkFile> Files { get; set; }
 
-			object files;
-			if (data.TryGetValue ("files", out files)) {
-				Files = new List<SparkFile> ();
-				var listOfFiles = files as List<object>;
-				foreach (var toString in listOfFiles) {
-					var url = toString as string;
-					var fileId = url.Substring (url.LastIndexOf ('/') + 1);
-					Files.Add (new SparkFile(fileId));
-				}
-			}
-		}
+        /// <summary>
+        /// List of people mentioned in the message.
+        /// </summary>
+        public List<Person> Mentions { get; set; }
 
-		/// <summary>
-		/// Commits the current state of the local Room object to Spark.
-		/// This will create a new room if it doesn't exist. 
-		/// </summary>
-		/// <param name="error">The error from Spark (if any).</param>
-		/// <param name="result">The created/updated Room from Spark.</param>
-		public IEnumerator Commit(Action<SparkMessage> error, Action<Message> result) {
-			// Setup request from current state of Room object
-			var manager = Request.Instance;
+        /// <summary>
+        /// Creates a representation of existing Spark-side Message.
+        /// Use <see cref="Load"/> to populate rest of properties from Spark.
+        /// </summary>
+        /// <param name="id">Spark UID of the Message.</param>
+        public Message(string id)
+        {
+            Id = id;
+        }
 
-			// Message Data
-			var data = new Dictionary<string, string> ();
-			 
-			// Pick one of destination!
-			var destinationCount = 0;
+        /// <summary>
+        /// Creates a new Message posted into a given Room.
+        /// </summary>
+        /// <param name="room">The Room to post the Message into.</param>
+        public Message(Room room)
+        {
+            Room = room;
+            Author = Person.AuthenticatedUser;
+        }
 
-			if (RoomId != null) {
-				data ["roomId"] = RoomId;
-				destinationCount++;
-			}
+        /// <summary>
+        /// Creates a new Message sent to a given Person via a 1:1 / Direct Room.
+        /// </summary>
+        /// <param name="person">The Person to send the Message to.</param>
+        public Message(Person person)
+        {
+            Recipient = person;
+            Author = Person.AuthenticatedUser;
+        }
 
-			if (ToPersonId != null) {
-				data ["toPersonId"] = ToPersonId;
-				destinationCount++;
-			}
+        protected override Dictionary<string, object> ToDict(List<string> fields)
+        {
+            var data = base.ToDict();
 
-			if (ToPersonEmail != null) {
-				data ["toPersonEmail"] = ToPersonEmail;
-				destinationCount++;
-			}
+            // Destination.
+            if (Room != null)
+            {
+                data["roomId"] = Room.Id;
+            }
+            else if (Recipient != null)
+            {
+                data["toPersonId"] = Recipient.Id;
+            }
 
-			if (destinationCount > 1 || destinationCount == 0) {
-				Debug.LogError ("A message must have 1 and only 1 destination");
-			}
+            // Author.
+            data["personId"] = Author.Id;
 
-			data ["text"] = Text;
-			data ["markdown"] = Markdown;
-			data ["html"] = Html;
+            // Message Content.
+            data["text"] = Text;
+            data["markdown"] = Markdown;
 
-			// TODO: File uploading
-			try {
-				if (data["files"] != null) {
-					throw new NotImplementedException ("Uploading files is not currently supported.");
-				}
-			} catch (KeyNotFoundException) { }
+            // Uploaded Files.
+            if (Files != null && Files.Count > 0)
+            {
+                var fileUrls = new List<string>();
+                foreach (var file in Files)
+                {
+                    fileUrls.Add(file.UploadUrl.AbsoluteUri);
+                }
+                data["files"] = fileUrls;
+            }
 
-			// Make request
-			using (UnityWebRequest www = manager.Generate("messages", UnityWebRequest.kHttpVerbPOST)) {
-				byte[] raw_data = System.Text.Encoding.UTF8.GetBytes (Json.Serialize (data));
-				www.uploadHandler = new UploadHandlerRaw (raw_data);
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError("Failed to Create Message: " + www.error);
-				} else {
-					var messageData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (messageData.ContainsKey ("message")) {
-						error (new SparkMessage (messageData));
-					} else {
-						result(new Message (messageData));
-					}
-				}
-			}
-		}
-			
-		/// <summary>
-		/// Deleted the message on Spark.
-		/// </summary>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
-			if (Id != null) {
-				var manager = Request.Instance;
-				using (UnityWebRequest www = manager.Generate ("messages/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
-					yield return www.Send ();
-					if (www.isError) {
-						Debug.LogError ("Failed to Delete Message: " + www.error);
-					} else {
-						// Delete returns 204 on success
-						if (www.responseCode == 204) {
-							result (true);
-						} else {
-							// Delete Failed
-							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-							error (new SparkMessage (json));
-						}
-					}
-				}
-			}
-		}
+            return CleanDict(data, fields);
+        }
 
-		/// <summary>
-		/// Gets the message details.
-		/// </summary>
-		/// <returns>The Message object</returns>
-		/// <param name="messageId">Message identifier.</param>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		public static IEnumerator GetMessageDetails(string messageId, Action<SparkMessage> error, Action<Message> result) {
-			var manager = Request.Instance;
-			using (UnityWebRequest www = manager.Generate ("messages/" + messageId, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError ("Failed to Retrieve Message: " + www.error);
-				} else {
-					var messageDetails = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (messageDetails.ContainsKey ("message")) {
-						error (new SparkMessage (messageDetails));
-					} else {
-						result (new Message (messageDetails));
-					}
-				}
-			}
-		}
-			
-		/// <summary>
-		/// Lists the messages.
-		/// </summary>
-		/// <returns>The messages.</returns>
-		/// <param name="roomId">Room identifier.</param>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		/// <param name="before"></param>
-		/// <param name="beforeMessage">List all messages before a specific message ID.</param>
-		/// <param name="max">Max number of messages.</param>
-		public static IEnumerator ListMessages(string roomId, Action<SparkMessage> error, Action<List<Message>> result, string before = null, string beforeMessage = null, int max = 0) {
-			var manager = Request.Instance;
-			var data = new Dictionary<string, string> ();
-			data ["roomId"] = roomId;
+        protected override void LoadDict(Dictionary<string, object> data)
+        {
+            base.LoadDict(data);
 
-			// Optional arguments
-			if (before != null) {
-				data ["before"] = before;
-			}
-			if (beforeMessage != null) {
-				data ["beforeMessage"] = beforeMessage;
-			}
-			if (max != 0) {
-				data["max"] = max.ToString ();
-			}
+            // Destination.
+            if (data.ContainsKey("roomId"))
+            {
+                Room = new Room(data["roomId"] as string);
+            }
+            else if (data.ContainsKey("toPersonId"))
+            {
+                Recipient = new Person(data["toPersonId"] as string);
+            }
 
-			// Make Request
-			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
-			using (UnityWebRequest www = manager.Generate ("messages?" + queryString, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError ("Failed to List Messages: " + www.error);
-				} else {
-					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (json.ContainsKey ("message")) {
-						error (new SparkMessage (json));
-					} else {
-						var messages = new List<Message>();
-						var items = json ["items"] as List<object>;
-						foreach (Dictionary<string, object> message_json in items) {
-							messages.Add (new Message (message_json));
-						}
-						result (messages);
-					}
-				}
-			}
-		}
-	}
+            // Author.
+            Author = new Person(data["personId"] as string);
+
+            // Message Content.
+            Text = data["text"] as string;
+
+            object markdown;
+            if (data.TryGetValue("markdown", out markdown))
+            {
+                Markdown = markdown as string;
+            }
+
+            object html;
+            if (data.TryGetValue("html", out html))
+            {
+                Html = html as string;
+            }
+
+            // Uploaded Files.
+            object files;
+            if (data.TryGetValue("files", out files))
+            {
+                var tempFiles = files as List<object>;
+                foreach (var urlString in tempFiles)
+                {
+                    var url = new Uri(urlString as string);
+                    Files.Add(new SparkFile(url));
+                }
+            }
+        }
+    }
 }

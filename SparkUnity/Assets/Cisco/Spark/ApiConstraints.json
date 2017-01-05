@@ -18,6 +18,16 @@
             "update": [
                 "isModerator"
             ]
+        },
+        "messages": {
+            "create": [
+                "roomId",
+                "toPersonId",
+                "toPersonEmail",
+                "text",
+                "markdown",
+                "files"
+            ]
         }
     }
 }
