@@ -33,7 +33,7 @@ namespace Cisco.Spark
             {
                 // Create new record.
                 var keys = RetrieveConstraints("create");
-                var createRoutine = Request.Instance.CreateRecord(ToDict(keys), SparkType.Room, error, LoadDict);
+                var createRoutine = Request.Instance.CreateRecord(ToDict(keys), SparkType, error, LoadDict);
                 yield return Request.Instance.StartCoroutine(createRoutine);
                 success(true);
             }
@@ -41,7 +41,7 @@ namespace Cisco.Spark
             {
                 // Update existing record.
                 var keys = RetrieveConstraints("update");
-                var updateRoutine = Request.Instance.UpdateRecord(Id, ToDict(keys), SparkType.Room, error, LoadDict);
+                var updateRoutine = Request.Instance.UpdateRecord(Id, ToDict(keys), SparkType, error, LoadDict);
                 yield return Request.Instance.StartCoroutine(updateRoutine);
                 success(true);
             }
@@ -65,6 +65,7 @@ namespace Cisco.Spark
         /// <param name="success">Callback for completion.</param>
         public IEnumerator Load(Action<SparkMessage> error, Action<bool> success)
         {
+            // TODO: Can probably retrieve from a cache here.
             if (Id != null)
             {
                 var getRecordRoutine = Request.Instance.GetRecord(Id, SparkType, error, result =>
