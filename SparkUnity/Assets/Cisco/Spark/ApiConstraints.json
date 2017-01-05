@@ -28,6 +28,14 @@
                 "markdown",
                 "files"
             ]
+        },
+        "teams": {
+            "create": [
+                "name"
+            ],
+            "update": [
+                "name"
+            ]
         }
     }
 }
