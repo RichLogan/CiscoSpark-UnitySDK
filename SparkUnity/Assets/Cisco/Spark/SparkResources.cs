@@ -19,7 +19,6 @@ namespace Cisco.Spark
 
     public class SparkResources : MonoBehaviour
     {
-
         /// <summary>
         /// Singleton Instance.
         /// </summary>
@@ -30,6 +29,9 @@ namespace Cisco.Spark
         /// </summary>
         public Dictionary<SparkType, string> UrlEndpoints;
 
+        /// <summary>
+        /// Defines what fields each API endpoints can support for Create and Update operations.
+        /// </summary>
         public Dictionary<string, object> ApiConstraints;
 
         void Awake()
