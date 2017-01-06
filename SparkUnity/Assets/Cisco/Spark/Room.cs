@@ -121,6 +121,11 @@ namespace Cisco.Spark
         /// <param name="fields">A specific list of fields to serialise.</param>
         protected override Dictionary<string, object> ToDict(List<string> fields = null)
         {
+            // Constraint checks.
+            if (Title == null)
+            {
+                throw new Exception("Room title can never be null.");
+            }
             var data = base.ToDict();
             data["title"] = Title;
             return CleanDict(data, fields);
