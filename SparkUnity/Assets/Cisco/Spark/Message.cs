@@ -110,7 +110,7 @@ namespace Cisco.Spark
                 var fileUrls = new List<string>();
                 foreach (var file in Files)
                 {
-                    fileUrls.Add(file.Url.AbsoluteUri);
+                    fileUrls.Add(file.UploadUrl.AbsoluteUri);
                 }
                 data["files"] = fileUrls;
             }
