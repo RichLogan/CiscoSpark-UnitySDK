@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace Cisco.Spark
 {
+    /// <summary>
+    /// A registered user of the Spark platform.
+    /// </summary>
     public class Person : SparkObject
     {
         /// <summary>
@@ -14,16 +17,31 @@ namespace Cisco.Spark
             get { return SparkType.Person; }
         }
 
+        /// <summary>
+        /// Full name of the Person.
+        /// </summary>
         public string DisplayName { get; set; }
 
+        /// <summary>
+        /// Friendly name of the Person.
+        /// </summary>
         public string NickName { get; set; }
 
+        /// <summary>
+        /// First name of the Person.
+        /// </summary>
         public string FirstName { get; set; }
 
+        /// <summary>
+        /// Last name of the Person.
+        /// </summary>
         public string LastName { get; set; }
 
         public Avatar Avatar { get; set; }
 
+        /// <summary>
+        /// List of emails associated with this person.
+        /// </summary>
         public List<string> Emails { get; set; }
 
         /// <summary>
@@ -61,6 +79,8 @@ namespace Cisco.Spark
             // TODO: Add Person specific fields.
             return CleanDict(data, fields);
         }
+
+        // TODO: List Rooms and List Teams?
 
         /// <summary>
         /// Populates an object with data recieved from Spark.
