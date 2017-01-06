@@ -36,6 +36,17 @@
             "update": [
                 "name"
             ]
+        },
+        "team/memberships": {
+            "create": [
+                "teamId",
+                "personId",
+                "personEmail",
+                "isModerator"
+            ],
+            "update": [
+                "isModerator"
+            ]
         }
     }
 }
