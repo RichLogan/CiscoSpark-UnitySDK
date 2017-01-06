@@ -180,7 +180,7 @@ namespace Cisco.Spark
         /// <param name="error">The error from Spark, if any.</param>
         /// <param name="result">The resultant list of the given SparkObject typeparamref name="T".</param>
         /// <typeparam name="T">The SparkObject child being searched for.</param>
-        public static IEnumerator ListObjects<T>(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<T>> result) where T : SparkObject
+        protected static IEnumerator ListObjects<T>(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<T>> result) where T : SparkObject
         {
             var listRoutine = Request.Instance.ListRecords(constraints, type, error, success =>
             {
