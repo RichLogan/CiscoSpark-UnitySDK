@@ -7,6 +7,12 @@ Basic `TODO` list:
 - Better Testing
 - Full Documentation
 
+## Docs
+
+Working on it!
+
+For the moment I'm uploaded the latest generated stuff here if you really want to look: [Documentation](https://cisco.box.com/s/e30uljet1rv80nwy8nk6g57p4tl2fmty)
+
 ## About
 This library takes advantage of the new `UnityEngine.Networking.UnityWebRequest` functionality introduced in Unity 5.4, as well as running all methods via Coroutines and returning results and errors using `System.Action`, in order to be non-blocking. I took inspiration from the NodeJS callback style using error, response.
 
@@ -18,6 +24,16 @@ The SDK gives the following for each object:
 - Ability to List all objects from Spark matching a given query.
 - Ability to retrieve a specific instance from Spark.
 - A `SparkMessage` will be returned via the `error` callback if Spark cannot complete a request.
+
+The basic syntax to run any of the requests is:
+
+```c#
+StartCoroutine(sparkObject.function(requiredParams, error => {
+    // This will run on an error.
+}, success => {
+    // This will run on success.
+}, optionalParams));
+```
 
 Please see the Spark Developer documentation at http://developer.ciscospark.com for details about specific requests. This SDK will always aim for parity with the APIs documented there.
 
