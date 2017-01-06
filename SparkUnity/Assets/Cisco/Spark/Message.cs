@@ -110,9 +110,19 @@ namespace Cisco.Spark
                 var fileUrls = new List<string>();
                 foreach (var file in Files)
                 {
-                    fileUrls.Add(file.UploadUrl.AbsoluteUri);
+                    fileUrls.Add(file.Url.AbsoluteUri);
                 }
                 data["files"] = fileUrls;
+            }
+
+            // Mentions.
+            if (Mentions != null && Mentions.Count > 0) {
+                var personIds = new List<string>();
+                foreach (var person in Mentions)
+                {
+                    personIds.Add(person.Id);
+                }
+                data["mentionedPeople"] = personIds;
             }
 
             return CleanDict(data, fields);
@@ -154,12 +164,28 @@ namespace Cisco.Spark
             object files;
             if (data.TryGetValue("files", out files))
             {
-                var tempFiles = files as List<object>;
-                foreach (var urlString in tempFiles)
+                var extractedFiles = files as List<object>;
+                var tempFiles = new List<SparkFile>();
+                foreach (var urlString in extractedFiles)
                 {
                     var url = new Uri(urlString as string);
-                    Files.Add(new SparkFile(url));
+                    tempFiles.Add(new SparkFile(url));
                 }
+                Files = tempFiles;
+            }
+
+            // Mentions
+            object mentions;
+            if (data.TryGetValue("mentionedPeople", out mentions))
+            {
+                var extractedIds = mentions as List<object>;
+                var tempPeople = new List<Person>();
+                foreach (var id in extractedIds)
+                {
+                    var stringId = id as string;
+                    tempPeople.Add(new Person(stringId));
+                }
+                Mentions = tempPeople;
             }
         }
     }
