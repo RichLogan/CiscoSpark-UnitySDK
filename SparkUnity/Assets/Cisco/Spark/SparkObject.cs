@@ -144,7 +144,7 @@ namespace Cisco.Spark
             // Retrieve constraints.
             try
             {
-                var lookupKey = SparkResources.Instance.UrlEndpoints[SparkType];
+                var lookupKey = SparkType.GetEndpoint();
                 try
                 {
                     var resourceConstraints = SparkResources.Instance.ApiConstraints[lookupKey] as Dictionary<string, object>;

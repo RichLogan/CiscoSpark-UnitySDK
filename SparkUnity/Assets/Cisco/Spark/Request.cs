@@ -85,7 +85,7 @@ namespace Cisco.Spark
         /// <param name="result">Result.</param>
         public IEnumerator GetRecord(string id, SparkType type, Action<SparkMessage> error, Action<Dictionary<string, object>> result)
         {
-            var url = string.Format("{0}/{1}", SparkResources.Instance.UrlEndpoints[type], id);
+            var url = string.Format("{0}/{1}", type.GetEndpoint(), id);
             using (var www = Generate(url, UnityWebRequest.kHttpVerbGET))
             {
                 yield return www.Send();
@@ -123,7 +123,7 @@ namespace Cisco.Spark
         {
             // Create request.
             var recordDetails = System.Text.Encoding.UTF8.GetBytes(Json.Serialize(data));
-            using (var www = Generate(SparkResources.Instance.UrlEndpoints[type], UnityWebRequest.kHttpVerbPOST, recordDetails))
+            using (var www = Generate(type.GetEndpoint(), UnityWebRequest.kHttpVerbPOST, recordDetails))
             {
                 yield return www.Send();
 
@@ -162,7 +162,7 @@ namespace Cisco.Spark
         {
             // Update Record.
             var recordDetails = System.Text.Encoding.UTF8.GetBytes(Json.Serialize(data));
-            using (var www = Generate(SparkResources.Instance.UrlEndpoints[type] + "/" + id, UnityWebRequest.kHttpVerbPUT, recordDetails))
+            using (var www = Generate(type.GetEndpoint() + "/" + id, UnityWebRequest.kHttpVerbPUT, recordDetails))
             {
                 yield return www.Send();
 
@@ -199,7 +199,7 @@ namespace Cisco.Spark
         public IEnumerator DeleteRecord(string id, SparkType type, Action<SparkMessage> error, Action<bool> success)
         {
             // Create Request.
-            using (var www = Generate(SparkResources.Instance.UrlEndpoints[type] + "/" + id, UnityWebRequest.kHttpVerbDELETE))
+            using (var www = Generate(type.GetEndpoint() + "/" + id, UnityWebRequest.kHttpVerbDELETE))
             {
                 // Make request.
                 yield return www.Send();
@@ -229,7 +229,7 @@ namespace Cisco.Spark
         public IEnumerator ListRecords(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<object>> result)
         {
             string queryString = System.Text.Encoding.UTF8.GetString(UnityWebRequest.SerializeSimpleForm(constraints));
-            string url = string.Format("{0}?{1}", SparkResources.Instance.UrlEndpoints[type], queryString);
+            string url = string.Format("{0}?{1}", type.GetEndpoint(), queryString);
             using (var www = Generate(url, UnityWebRequest.kHttpVerbGET))
             {
                 yield return www.Send();
