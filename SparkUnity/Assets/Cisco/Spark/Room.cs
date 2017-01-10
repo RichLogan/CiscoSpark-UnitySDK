@@ -4,6 +4,9 @@ using System;
 
 namespace Cisco.Spark
 {
+    /// <summary>
+    /// Virtual meeting place where Persons post Messages and collaborate.
+    /// </summary>
     public class Room : SparkObject
     {
         /// <summary>
@@ -139,7 +142,7 @@ namespace Cisco.Spark
         {
             base.LoadDict(data);
             Title = data["title"] as string;
-            Type = RoomTypeLookup.FromApi(data["type"] as string);
+            Type = RoomTypeExtensions.FromApi(data["type"] as string);
             IsLocked = (bool)data["isLocked"];
             LastActivity = DateTime.Parse(data["lastActivity"] as string);
             Creator = new Person(data["creatorId"] as string);
@@ -168,7 +171,7 @@ namespace Cisco.Spark
 
             if (type != RoomType.Unsupported)
             {
-                constraints.Add("type", RoomTypeLookup.ToApi(type));
+                constraints.Add("type", type.ToApi());
             }
 
             var listObjects = ListObjects<Room>(constraints, SparkType.Room, error, results);

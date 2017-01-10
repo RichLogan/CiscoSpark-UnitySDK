@@ -121,7 +121,6 @@ public class TestRoom : MonoBehaviour
             {
                 foreach (var message in results)
                 {
-                    Debug.Log(message.Text);
                     if (message.Text != null)
                     {
                         check = true;
