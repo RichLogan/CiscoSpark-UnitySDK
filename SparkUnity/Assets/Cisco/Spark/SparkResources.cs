@@ -16,7 +16,8 @@ namespace Cisco.Spark
         Team,
         TeamMembership,
         Message,
-        Webhook
+        Webhook,
+        Unsupported
     }
 
     /// <summary>
@@ -48,23 +49,58 @@ namespace Cisco.Spark
                 case SparkType.Webhook:
                     return "webhooks";
                 default:
-                    return null;
+                    throw new System.Exception("SparkType must have a registered endpoint");
+            }
+        }
+
+        /// <summary>
+        /// Returns the SparkType a URL endpoint represents.
+        /// </summary>
+        /// <param name="endpoint">The given URL endpoint resource.</param>
+        /// <returns>The SparkType.</returns>
+        public static SparkType FromEndpoint(this string endpoint)
+        {
+            switch (endpoint)
+            {
+                case "memberships":
+                    return SparkType.Membership;
+                case "rooms":
+                    return SparkType.Room;
+                case "people":
+                    return SparkType.Person;
+                case "teams":
+                    return SparkType.Team;
+                case "team/memberships":
+                    return SparkType.TeamMembership;
+                case "messages":
+                    return SparkType.Message;
+                case "webhooks":
+                    return SparkType.Webhook;
+                default:
+                    throw new System.NotSupportedException("URL Endpoint " + endpoint  + " does not have a supported SparkType.");
             }
         }
     }
 
+    /// <summary>
+    /// Holds specific data pertaining to the operations and URL endpoints
+    /// supported by the Spark web service.
+    /// </summary>
     public class SparkResources : MonoBehaviour
     {
         /// <summary>
-        /// Singleton Instance.
+        /// Singleton.
         /// </summary>
         public static SparkResources Instance;
 
         /// <summary>
-        /// Defines what fields each API endpoints can support for Create and Update operations.
+        /// Defines which fields each API endpoints can support for Create and Update operations.
         /// </summary>
         public Dictionary<string, object> ApiConstraints;
 
+        /// <summary>
+        /// Awake runs as soon as possible and before any Start call.
+        /// </summary>
         void Awake()
         {
             // Singleton.
