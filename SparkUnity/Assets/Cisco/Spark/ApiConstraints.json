@@ -47,6 +47,20 @@
             "update": [
                 "isModerator"
             ]
+        },
+        "webhooks": {
+            "create": [
+                "name",
+                "targetUrl",
+                "resource",
+                "event",
+                "filter",
+                "secret"
+            ],
+            "update": [
+                "name",
+                "targetUrl"
+            ]
         }
     }
 }
