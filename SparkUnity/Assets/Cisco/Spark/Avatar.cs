@@ -5,9 +5,11 @@ using UnityEngine.Networking;
 
 namespace Cisco.Spark
 {
+    /// <summary>
+    /// Represents a <see cref="Person"/>s display picture on Spark.
+    /// </summary>
     public class Avatar
     {
-
         /// <summary>
         /// URL of the Person's avatar.
         /// </summary>
@@ -23,7 +25,11 @@ namespace Cisco.Spark
         /// </summary>
         public bool Downloaded = false;
 
-        public Avatar(Uri uri)
+        /// <summary>
+        /// Builds an Avatar object from an image url.
+        /// </summary>
+        /// <param name="uri">Display picture URL.</param>
+        internal Avatar(Uri uri)
         {
             Uri = uri;
         }
