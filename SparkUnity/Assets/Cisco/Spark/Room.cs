@@ -5,7 +5,7 @@ using System;
 namespace Cisco.Spark
 {
     /// <summary>
-    /// Virtual meeting place where Persons post Messages and collaborate.
+    /// Virtual meeting place where <see cref="Person"/>s post <see cref="Message"/>s and collaborate.
     /// </summary>
     public class Room : SparkObject
     {

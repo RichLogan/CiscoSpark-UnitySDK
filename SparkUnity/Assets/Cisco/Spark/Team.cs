@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 namespace Cisco.Spark
 {
+    /// <summary>
+    /// A Team is a group of <see cref="Person"/>s with a set of <see cref="Room"/>s that are visible to all members of the Team.
+    /// </summary>
     public class Team : SparkObject
     {
         /// <summary>

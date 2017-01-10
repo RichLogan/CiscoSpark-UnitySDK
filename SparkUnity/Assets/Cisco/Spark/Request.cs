@@ -7,9 +7,11 @@ using MiniJSON;
 
 namespace Cisco.Spark
 {
+    /// <summary>
+    /// Handles building and making web requests to the Spark service.
+    /// </summary>
     public class Request : MonoBehaviour
     {
-
         /// <summary>
         /// Singleton for a Request instance.
         /// </summary>
@@ -226,6 +228,13 @@ namespace Cisco.Spark
             }
         }
 
+        /// <summary>
+        /// Retrieves multiple records from the Spark service.
+        /// </summary>
+        /// <param name="constraints">Any constraints on the results returned. See ApiConstrains.json for SparkType specific options.</param>
+        /// <param name="type">The SparkType to retrieve.</param>
+        /// <param name="error">Error from Spark, if any.</param>
+        /// <param name="result">List of deserialised results as dictionaries.</param>
         public IEnumerator ListRecords(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<object>> result)
         {
             string queryString = System.Text.Encoding.UTF8.GetString(UnityWebRequest.SerializeSimpleForm(constraints));

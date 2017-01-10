@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace Cisco.Spark
 {
+    /// <summary>
+    /// A single message in a group Room or directly to a Person.
+    /// </summary>
     public class Message : SparkObject
     {
         /// <summary>

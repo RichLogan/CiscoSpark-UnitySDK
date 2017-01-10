@@ -37,6 +37,9 @@ namespace Cisco.Spark
         /// </summary>
         public string LastName { get; set; }
 
+        /// <summary>
+        /// Display picture of the Person.
+        /// </summary>
         public Avatar Avatar { get; set; }
 
         /// <summary>

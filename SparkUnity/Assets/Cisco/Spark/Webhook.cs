@@ -47,6 +47,10 @@ namespace Cisco.Spark
         /// </summary>
         public string Secret { get; set; }
 
+        /// <summary>
+        /// Creates a Webhook from an existing Spark side Webhook.
+        /// </summary>
+        /// <param name="id">Spark UID of the Webhook.</param>
         public Webhook(string id)
         {
             Id = id;
@@ -61,7 +65,7 @@ namespace Cisco.Spark
         /// <param name="webhookEvent">The event type for the Webhook.</param>
         /// <param name="filter">The filter that defines the webhook scope.</param>
         /// <param name="secret">Secret used to generate payload signature.</param>
-        public Webhook(string name, Uri target, SparkType resource, string webhookEvent, string filter=null, string secret=null)
+        public Webhook(string name, Uri target, SparkType resource, string webhookEvent, string filter = null, string secret = null)
         {
             Name = name;
             Target = target;
@@ -102,12 +106,14 @@ namespace Cisco.Spark
             Event = data["event"] as string;
 
             object filter;
-            if (data.TryGetValue("filter", out filter)) {
+            if (data.TryGetValue("filter", out filter))
+            {
                 Filter = filter as string;
             }
 
             object secret;
-            if (data.TryGetValue("secret", out secret)) {
+            if (data.TryGetValue("secret", out secret))
+            {
                 Secret = secret as string;
             }
         }

@@ -89,8 +89,8 @@ namespace Cisco.Spark
         /// </summary>
         /// <param name="error">Error from Spark, if any.</param>
         /// <param name="results">List of TeamMemberships.</param>
-        /// <param name="room">The Room to show TeamMemberships for.</param>
-        /// <param name="person">The person to show TeamMemberships for.</param>
+        /// <param name="team">The Team to show TeamMemberships for.</param>
+        /// <param name="person">The Person to show TeamMemberships for.</param>
         /// <param name="max">The maximum number of TeamMemberships to return.</param>
         /// <returns></returns>
 		public static IEnumerator ListTeamMemberships(Action<SparkMessage> error, Action<List<TeamMembership>> results, Team team = null, Person person = null, int max = 0)

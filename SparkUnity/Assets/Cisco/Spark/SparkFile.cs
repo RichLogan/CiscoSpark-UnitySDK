@@ -6,17 +6,40 @@ using System.Collections.Generic;
 
 namespace Cisco.Spark
 {
-
+    /// <summary>
+    /// An uploaded file on Spark.
+    /// </summary>
     public class SparkFile
     {
+        /// <summary>
+        /// UID of the uploaded file.
+        /// </summary>
         public string Id { get; set; }
+
+        /// <summary>
+        /// Public URL the file can be found at (for uploading).
+        /// </summary>
         public Uri UploadUrl { get; set; }
-        public string Filename { get; set; }
-        public string Extension { get; set; }
+
+        /// <summary>
+        /// The filename of the SparkFile.
+        /// </summary>
+        public string Filename { get; private set; }
+
+        /// <summary>
+        /// The extension of the SparkFile.
+        /// </summary>
+        public string Extension { get; private set; }
+
+        /// <summary>
+        /// The raw data of the file as a byte array.
+        /// </summary>
         public byte[] Data { get; set; }
 
-        // Return helper
-        public Type ReturnType;
+        /// <summary>
+        /// The C# type this file can be best represented as.
+        /// </summary>
+        public Type ReturnType { get; private set; }
 
         /// <summary>
         /// Initializes a new <see cref="Cisco.Spark.SparkFile"/> instance from a given Spark File ID.
@@ -27,10 +50,20 @@ namespace Cisco.Spark
             Id = id;
         }
 
-        public SparkFile(Uri url) {
+        /// <summary>
+        /// Generate a new SparkFile for upload from a public URL.
+        /// </summary>
+        /// <param name="url">Public URL the file can be found at.</param>
+        public SparkFile(Uri url)
+        {
             UploadUrl = url;
         }
 
+        /// <summary>
+        /// Generate a new SparkFile from local data.
+        /// </summary>
+        /// <param name="filename">Filename of the file.</param>
+        /// <param name="data">File data as bytes.</param>
         public SparkFile(string filename, byte[] data)
         {
             Filename = filename;
@@ -103,6 +136,10 @@ namespace Cisco.Spark
             }
         }
 
+        /// <summary>
+        /// Only retrieve the headers of the file.
+        /// </summary>
+        /// <param name="callback">Dictionary of headers.</param>
         public IEnumerator GetHeaders(Action<Dictionary<string, string>> callback)
         {
             var manager = Request.Instance;
@@ -124,6 +161,9 @@ namespace Cisco.Spark
             }
         }
 
+        /// <summary>
+        /// Sets <see cref="ReturnType"/> from the <see cref="extension"/> of the file.
+        /// </summary>
         void SetReturnType()
         {
             // Supported Return Types

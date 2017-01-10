@@ -1,13 +1,25 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace Cisco.Spark {
-	public class SparkError {
+namespace Cisco.Spark
+{
+    /// <summary>
+    /// Represents a single Spark side error returned from an operation.
+    /// Usually a SparkMessage contains one or more <see cref="SparkError"/>s.
+    /// </summary>
+    public class SparkError
+    {
+        /// <summary>
+        /// Specific description of the error.
+        /// </summary>
+        public string Description;
 
-		public string Description;
-
-		public SparkError(Dictionary<string, object> data) {
-			Description = data ["description"] as string;
-		}
-	}
+        /// <summary>
+        /// Builds an error from an API result.
+        /// </summary>
+        /// <param name="data">The serialised SparkError.</param>
+        public SparkError(Dictionary<string, object> data)
+        {
+            Description = data["description"] as string;
+        }
+    }
 }

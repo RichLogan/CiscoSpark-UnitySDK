@@ -4,6 +4,12 @@ using System.Collections.Generic;
 
 namespace Cisco.Spark
 {
+    /// <summary>
+    /// SparkObject represents an object on the Spark Service, and defines
+    /// functionality needed for CRUD operations, as well as loading from and
+    /// sending to the Spark web service.
+    /// Each SparkObject MUST map to a <see cref="SparkType"/>.
+    /// </summary>
     public abstract class SparkObject
     {
         /// <summary>
