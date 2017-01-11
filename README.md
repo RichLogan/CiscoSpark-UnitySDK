@@ -19,10 +19,10 @@ This SDK will always aim for parity with the web APIs at http://developer.ciscos
 
 It provides:
     - CRUD operations for all SparkObjects.
-        - `Commit()` for creating or updating a record.
-        - `Delete()` for deletion.
-        - `Load()` for retrieve a record.
-        - `ListObject()` for querying records.
+    - `Commit()` for creating or updating a record.
+    - `Delete()` for deletion.
+    - `Load()` for retrieve a record.
+    - `ListObject()` for querying records.
 
 ## Setup
 1. Import the scripts or UnityPackage.
