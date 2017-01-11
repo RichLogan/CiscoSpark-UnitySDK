@@ -7,6 +7,7 @@ Basic `TODO` list:
 - Better Testing
 - Cleanup
 - Additional objects (Orgs, Licenses etc.)
+- Pagination support
 
 ## Docs
 
@@ -43,7 +44,7 @@ StartCoroutine(sparkObject.someFunction(requiredParams, error => {
     Debug.LogError("The operation failed: " + error.Message);
 }, success => {
     // This will run on success.
-    Debug.Log("The operation was a success!);
+    Debug.Log("The operation was a success!");
 }, optionalParams));
 ```
 
