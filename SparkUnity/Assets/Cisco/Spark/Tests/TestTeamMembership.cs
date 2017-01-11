@@ -1,104 +1,180 @@
 ﻿using UnityEngine;
 using Cisco.Spark;
 
-public class TestTeamMembership : MonoBehaviour {
-	// Use this for initialization
-	void Start ()
-	{
-		// Error Tracking
-		var errorCount = 0;
+public class TestTeamMembership : MonoBehaviour
+{
+    [TooltipAttribute("This must NOT be the person creating the Team")]
+    public string testPersonid = "";
 
-		var testTeam = new Team ("SparkUnityTestTeam");
-		StartCoroutine (testTeam.Commit (error => {
-			Debug.LogError("Could not create target Team: " + error.Message);
-			errorCount++;
-		}, team => {
-			Debug.Log("Created target Team!");
-			testTeam = team;
-			if (testTeam.Id == null) {
-				Debug.LogError ("Could not create target Team");
-				errorCount++;
-			}
+    Person person;
+    TeamMembership membership;
+    Team testTeam;
 
-			// Create the membership
-			var teamMembership = new TeamMembership ();
-			teamMembership.TeamId = testTeam.Id;
-			teamMembership.PersonId = "Y2lzY29zcGFyazovL3VzL1BFT1BMRS9iYzJkMjY2YS1jYjI4LTRkZDItOTBkOC1kMzllYjc0OWZlYTU";
+    bool start = false;
 
-			// Commit the membership to Spark
-			StartCoroutine (teamMembership.Commit (commitError => {
-				Debug.LogError ("Couldn't commit team membership: " + commitError.Message);
-				errorCount++;
-			}, commitResponse => {
-				Debug.Log("Created team membership on Spark!");
-				teamMembership = commitResponse;
-				if (teamMembership.Id == null) {
-					Debug.LogError ("Couldn't commit membership");
-					errorCount++;
-				}
+    void Update()
+    {
+        // We need to use Person.AuthenticatedUser so have to wait for it to be ready.
+        if (Request.Instance.SetupComplete && !start)
+        {
+            TestStart();
+            start = true;
+        }
+    }
 
-				// Try and commit empty membership
-				StartCoroutine (new TeamMembership ().Commit (emptyCommitError => {
-					// This should error
-					if (!emptyCommitError.Message.Equals ("teamId cannot be null")) {
-						Debug.LogError ("Empty TeamId test failed: " + emptyCommitError.Message);
-					} else {
-						Debug.Log("Empty TeamId test passed!");
-					}
+    void TestStart()
+    {
+        // Check people.
+        if (testPersonid == Person.AuthenticatedUser.Id)
+        {
+            Fail("Test person cannot be the authenticated user.");
+        }
 
-					// Get Membership Details
-					StartCoroutine (TeamMembership.GetTeamMembershipDetails (teamMembership.Id, membershipDetailsError => {
-						Debug.LogError ("Get Team Membership Details failed: " + membershipDetailsError.Message);
-						errorCount++;
-					}, membershipDetails => {
-						teamMembership = membershipDetails;
-						if (membershipDetails.Id != teamMembership.Id) {
-							Debug.LogError ("Couldn't retrieve membership details");
-							errorCount++;
-						} else {
-							Debug.Log ("Get Team Membership Details passed!");
-						}
+        // Need a Person and a Team first!
+        person = new Person(testPersonid);
+        testTeam = new Team();
+        testTeam.Name = "Cisco Spark Unity Team Test";
+        // Commit Test Team.
+        StartCoroutine(testTeam.Commit(error =>
+        {
+            Fail(error.Message);
+        }, result =>
+        {
+            CreateMembership();
+        }));
 
-						// List Memberships
-						StartCoroutine (TeamMembership.ListTeamMemberships (listMembershipsError => {
-							Debug.LogError("Couldn't list team memberships: " + listMembershipsError.Message);
-							errorCount++;
-						}, memberships => {
-							Debug.Log("List Team Memberships passed!");
+    }
 
-							// Convert to moderator
-							teamMembership.IsModerator = true;
-							StartCoroutine (teamMembership.Commit(moderatedError => {
-								Debug.LogError("Couldn't set moderator flag: " + moderatedError.Message);
-								errorCount++;
-							}, moderatedMembership => {
-								teamMembership = moderatedMembership;
-								if (!teamMembership.IsModerator) {
-									Debug.LogError("Couldn't set moderator flag");
-									errorCount++;
-								} else {
-									Debug.Log("Edit Team Membership passed!");
-								}
+    void CreateMembership()
+    {
+        // Got new Team, now create membership.
+        var newMembership = new TeamMembership(testTeam, person);
 
-								// Clean up membership
-								StartCoroutine (teamMembership.Delete (deleteError => {
-									Debug.Log("Couldn't delete membership: " + deleteError.Message);
-									errorCount++;
-								}, deleted => StartCoroutine (testTeam.Delete (deleteTeamError => {
-									Debug.LogError ("Couldn't delete target Team: " + deleteTeamError.Message);
-									errorCount++;
-								}, deleteTeam => {
-									if (errorCount > 0) {
-										Debug.LogError (errorCount + " tests failed");
-									} else {
-										Debug.Log ("All Team Membership tests passed");
-									}
-								}))));
-							}));
-						}, testTeam.Id));
-					}));
-				}, res => {}));
-			}));
-		}));
-	}
+        // Commit to Spark.
+        StartCoroutine(newMembership.Commit(error =>
+        {
+            // Failed!
+            Fail(error.Message);
+        }, commited =>
+        {
+            // Seems to have worked, but we don't know for sure yet.
+            membership = newMembership;
+            GetMembership();
+        }));
+    }
+
+    void GetMembership()
+    {
+        var retrieve = new TeamMembership(membership.Id);
+        StartCoroutine(retrieve.Load(error =>
+        {
+            // Failed!
+            Fail(error.Message);
+        }, success =>
+        {
+            if (retrieve.Team.Id == membership.Team.Id)
+            {
+                // Create is now known to have passed here.
+                Debug.Log("Create Team Membership Passed!");
+                // Get Membership just passed.
+                Debug.Log("Get Team Membership Passed!");
+                // Move on.
+                UpdateMembership();
+            }
+        }));
+    }
+
+    void UpdateMembership()
+    {
+        // Let's set moderator to true.
+        if (membership.IsModerator == true)
+        {
+            Fail("Moderator should start false");
+        }
+        else
+        {
+            membership.IsModerator = true;
+            StartCoroutine(membership.Commit(error =>
+            {
+                // Failed.
+                Fail(error.Message);
+            }, success =>
+            {
+                // Looks like it's worked, let's check.
+                var checkingModerator = new TeamMembership(membership.Id);
+                StartCoroutine(checkingModerator.Load(error =>
+                {
+                    Fail(error.Message);
+                }, checkSuccess =>
+                {
+                    if (checkingModerator.IsModerator)
+                    {
+                        // Now we know Update passed for sure.
+                        Debug.Log("Update Team Membership Passed!");
+                        ListMemberships();
+                    }
+                }));
+            }));
+        }
+    }
+
+    void ListMemberships()
+    {
+        // List all memberships and see if our new one is there.
+        StartCoroutine(TeamMembership.ListTeamMemberships(error =>
+        {
+            // Failed.
+            Fail(error.Message);
+        }, results =>
+        {
+            foreach (var mem in results)
+            {
+                if (mem.Id == membership.Id)
+                {
+                    // Found it!
+                    Debug.Log("List Team Membership Memberships Passed");
+                    DeleteMembership();
+                }
+            }
+        }, testTeam));
+    }
+
+    void DeleteMembership()
+    {
+        var oldMembershipId = string.Copy(membership.Id);
+        StartCoroutine(membership.Delete(error =>
+        {
+            Fail(error.Message);
+        }, success =>
+        {
+            // Double check (Expect get to know fail).
+            var checkDelete = new TeamMembership(oldMembershipId);
+            StartCoroutine(checkDelete.Load(error =>
+            {
+                if (error.Message.Equals("Failed to get membership."))
+                {
+                    Debug.Log("Delete TeamMembership Passed!");
+                    TestEnd();
+                }
+            }, getSuccess =>
+            {
+                Fail("Should fail to Get deleted Membership");
+            }));
+        }));
+    }
+
+    void TestEnd()
+    {
+        // Delete the Team for cleanup.
+        StartCoroutine(testTeam.Delete(error => Fail(error.Message), success =>
+        {
+            Debug.Log("Deleted the test Team");
+            Debug.Log("***TestTeamMembership Finished***");
+        }));
+    }
+
+    void Fail(string error)
+    {
+        throw new System.Exception("TeamMembership tests failed: " + error);
+    }
 }

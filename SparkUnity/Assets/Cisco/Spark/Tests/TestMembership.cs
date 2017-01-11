@@ -1,105 +1,176 @@
 ﻿using UnityEngine;
 using Cisco.Spark;
 
-public class TestMembership : MonoBehaviour {
-	// Use this for initialization
-	void Start ()
-	{
-		// Error Tracking
-		var errorCount = 0;
+public class TestMembership : MonoBehaviour
+{
+    [TooltipAttribute("This must NOT be the person creating the room")]
+    public string testPersonid = "";
 
-		// Create a new room for testing
-		var testRoom = new Room ("Test Room (CiscoSpark-UnitySDK", null);
-		StartCoroutine (testRoom.Commit (error => {
-			Debug.LogError("Could not create target Room: " + error.Message);
-			errorCount++;
-		}, room => {
-			Debug.Log("Created target Room!");
-			testRoom = room;
-			if (testRoom.Id == null) {
-				Debug.LogError ("Could not create target Room");
-				errorCount++;
-			}
+    Person person;
+    Membership membership;
+    Room testRoom;
 
-			// Create the membership
-			var membership = new Membership ();
-			membership.RoomId = testRoom.Id;
-			membership.PersonId = "Y2lzY29zcGFyazovL3VzL1BFT1BMRS9iYzJkMjY2YS1jYjI4LTRkZDItOTBkOC1kMzllYjc0OWZlYTU";
+    bool start = false;
 
-			// Commit the membership to Spark
-			StartCoroutine (membership.Commit (commitError => {
-				Debug.LogError ("Couldn't commit membership: " + commitError.Message);
-				errorCount++;
-			}, commitResponse => {
-				Debug.Log("Created membership on Spark!");
-				membership = commitResponse;
-				if (membership.Id == null) {
-					Debug.LogError ("Couldn't commit membership");
-					errorCount++;
-				}
+    void Update()
+    {
+        // We need to use Person.AuthenticatedUser so have to wait for it to be ready.
+        if (Request.Instance.SetupComplete && !start)
+        {
+            TestStart();
+            start = true;
+        }
+    }
 
-				// Try and commit empty membership
-				StartCoroutine (new Membership ().Commit (emptyCommitError => {
-					// This should error
-					if (!emptyCommitError.Message.Equals ("roomId cannot be null")) {
-						Debug.LogError ("Empty RoomId test failed: " + emptyCommitError.Message);
-					} else {
-						Debug.Log("Empty RoomId test passed!");
-					}
+    void TestStart()
+    {
+        // Check people.
+        if (testPersonid == Person.AuthenticatedUser.Id)
+        {
+            Fail("Test person cannot be the authenticated user.");
+        }
 
-					// Get Membership Details
-					StartCoroutine (Membership.GetMembershipDetails (membership.Id, membershipDetailsError => {
-						Debug.LogError ("GetMembership Details failed: " + membershipDetailsError.Message);
-						errorCount++;
-					}, membershipDetails => {
-						membership = membershipDetails;
-						if (membershipDetails.Id != membership.Id) {
-							Debug.LogError ("Couldn't retrieve membership details");
-							errorCount++;
-						} else {
-							Debug.Log ("Get Membership Details passed!");
-						}
+        // Need a person and a room first!
+        person = new Person(testPersonid);
+        testRoom = new Room("Cisco Spark Unity SDK Test", null);
+        // Commit Test Room.
+        StartCoroutine(testRoom.Commit(error =>
+        {
+            Fail(error.Message);
+        }, result =>
+        {
+            CreateMembership();
+        }));
 
-						// List Memberships
-						StartCoroutine (Membership.ListMemberships (listMembershipsError => {
-							Debug.LogError("Couldn't list memberships: " + listMembershipsError.Message);
-							errorCount++;
-						}, memberships => {
-							Debug.Log("List Memberships passed!");
+    }
 
-							// Convert to moderator
-							membership.IsModerator = true;
-							StartCoroutine (membership.Commit(moderatedError => {
-								Debug.LogError("Couldn't set moderator flag: " + moderatedError.Message);
-								errorCount++;
-							}, moderatedMembership => {
-								membership = moderatedMembership;
-								if (!membership.IsModerator) {
-									Debug.LogError("Couldn't set moderator flag");
-									errorCount++;
-								} else {
-									Debug.Log("Edit Membership passed!");
-								}
+    void CreateMembership()
+    {
+        // Got new room, now create membership.
+        var newMembership = new Membership(testRoom, person);
 
-								// Clean up membership
-								StartCoroutine (membership.Delete (deleteError => {
-									Debug.Log("Couldn't delete membership: " + deleteError.Message);
-									errorCount++;
-								}, deleted => StartCoroutine (testRoom.Delete (deleteRoomError => {
-									Debug.LogError ("Couldn't delete target Room: " + deleteRoomError.Message);
-									errorCount++;
-								}, deleteRoom => {
-									if (errorCount > 0) {
-										Debug.LogError (errorCount + " tests failed");
-									} else {
-										Debug.Log ("All Membership tests passed");
-									}
-								}))));
-							}));
-						}, testRoom.Id));
-					}));
-				}, res => {}));
-			}));
-		}));
-	}
+        // Commit to Spark.
+        StartCoroutine(newMembership.Commit(error =>
+        {
+            // Failed!
+            Fail(error.Message);
+        }, commited =>
+        {
+            // Seems to have worked, but we don't know for sure yet.
+            membership = newMembership;
+            GetMembership();
+        }));
+    }
+
+    void GetMembership()
+    {
+        var retrieve = new Membership(membership.Id);
+        StartCoroutine(retrieve.Load(error =>
+        {
+            // Failed!
+            Fail(error.Message);
+        }, success =>
+        {
+            if (retrieve.Room.Id == membership.Room.Id)
+            {
+                // Create is now known to have passed here.
+                Debug.Log("Create Membership Passed!");
+                // Get Membership just passed.
+                Debug.Log("Get Membership Passed!");
+                // Move on.
+                UpdateMembership();
+            }
+        }));
+    }
+
+    void UpdateMembership()
+    {
+        // Let's set moderator to true.
+        if (membership.IsModerator == true)
+        {
+            Fail("Moderator should start false");
+        }
+        else
+        {
+            membership.IsModerator = true;
+            StartCoroutine(membership.Commit(error =>
+            {
+                // Failed.
+                Fail(error.Message);
+            }, success =>
+            {
+                // Looks like it's worked, let's check.
+                var checkingModerator = new Membership(membership.Id);
+                StartCoroutine(checkingModerator.Load(error =>
+                {
+                    Fail(error.Message);
+                }, checkSuccess =>
+                {
+                    if (checkingModerator.IsModerator)
+                    {
+                        // Now we know Update passed for sure.
+                        Debug.Log("Update Membership Passed!");
+                        ListMemberships();
+                    }
+                }));
+            }));
+        }
+    }
+
+    void ListMemberships()
+    {
+        // List all memberships and see if our new one is there.
+        StartCoroutine(Membership.ListMemberships(error =>
+        {
+            // Failed.
+            Fail(error.Message);
+        }, results =>
+        {
+            foreach (var mem in results)
+            {
+                if (mem.Id == membership.Id)
+                {
+                    // Found it!
+                    Debug.Log("List Memberships Passed");
+                    DeleteMembership();
+                }
+            }
+        }, testRoom));
+    }
+
+    void DeleteMembership()
+    {
+        var oldMembershipId = string.Copy(membership.Id);
+        StartCoroutine(membership.Delete(error =>
+        {
+            Fail(error.Message);
+        }, success =>
+        {
+            // Double check (Expect get to know fail).
+            var checkDelete = new Membership(oldMembershipId);
+            StartCoroutine(checkDelete.Load(error =>
+            {
+                Debug.Log(error.Message);
+                TestEnd();
+            }, getSuccess =>
+            {
+                Fail("Should fail to Get deleted Membership");
+            }));
+        }));
+    }
+
+    void TestEnd()
+    {
+        // Delete the room for cleanup.
+        StartCoroutine(testRoom.Delete(error => Fail(error.Message), success =>
+        {
+            Debug.Log("Deleted the test Room");
+            Debug.Log("***TestMembership Finished***");
+        }));
+    }
+
+    void Fail(string error)
+    {
+        throw new System.Exception("Membership tests failed: " + error);
+    }
 }

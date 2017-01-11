@@ -1,74 +1,117 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cisco.Spark;
+using System;
 
-public class TestWebhook : MonoBehaviour {
+public class TestWebhook : MonoBehaviour
+{
+    Webhook webhook;
 
-	// Use this for initialization
-	void Start () {
-		var errorCount = 0;
+    void Start()
+    {
+        TestStart();
+    }
 
-		// List Webhooks
-		StartCoroutine (Webhook.ListWebhooks (listWebhookError => {
-			errorCount++;
-			Debug.LogError ("List Webhooks failed: " + listWebhookError.Message);
-		}, webhooks => {
-			// List Webhooks Passed
-			var newWebhook = new Webhook (
-				"testingWebhook",
-				"http://example.org",
-				"messages",
-				"created",
-				"86dacc007724d8ea666f88fc77d918dad9537a15"
-			);
-			StartCoroutine (newWebhook.Commit (commitError => {
-				errorCount++;
-				Debug.LogError("Create Webhook failed: " + commitError.Message);
-			}, commitedWebhook => {
-				newWebhook = commitedWebhook;
-				if (newWebhook.Id == null) {
-					Debug.LogError("ID wasn't set. This shouldn't happen.");
-				} else {
-					// Create Passed
-					Debug.Log("Create Webhook Passed");
-					newWebhook.Name = "testingWebhookUpdated";
-					StartCoroutine (newWebhook.Commit (updateError => {
-						errorCount++;
-						Debug.Log("Update Webhook failed: " + updateError.Message);
-					}, updatedWebhook => {
-						newWebhook = updatedWebhook;
-						if (newWebhook.Name != "testingWebhookUpdated") {
-							errorCount++;
-							Debug.LogError("Couldn't update Webhook Name");
-						} else {
-							// Update Passed
-							Debug.Log("Update Webhook Passed");
+    void TestStart()
+    {
+        CreateWebhook();
+    }
 
-							StartCoroutine (Webhook.GetWebhookDetails (newWebhook.Id, detailsError => {
-								errorCount++;
-								Debug.LogError("Couldn't get Webhook details: " + detailsError.Message);
-							}, webhook => {
-								if (newWebhook.Id != webhook.Id) {
-									errorCount++;
-									Debug.LogError ("Retrieve webhook ID doesn't match");
-								} else {
-									// Details Passed
-									StartCoroutine (newWebhook.Delete (deleteError => {
-										errorCount++;
-										Debug.LogError ("Delete Webhook failed: " + deleteError.Message);
-									}, delete => {
-										// Finish and Report
-										if (errorCount == 0) {
-											Debug.Log("All tests passed");
-										} else {
-											Debug.LogError(errorCount + " tests failed");
-										}
-									}));
-								}
-							}));
-						}
-					}));
-				}
-			}));
-		}));
-	}
+    void CreateWebhook()
+    {
+        webhook = new Webhook("Testing Webhook", new Uri("http://example.org"), SparkType.Room, "created");
+        StartCoroutine(webhook.Commit(error =>
+        {
+            throw new Exception("Failed to create Webhook: " + error.Message);
+        }, success =>
+        {
+            GetWebhook();
+        }));
+    }
+
+    void GetWebhook()
+    {
+        var getWebhook = new Webhook(webhook.Id);
+        StartCoroutine(getWebhook.Load(error =>
+        {
+            throw new Exception("Failed to get Webhook: " + error.Message);
+        }, success =>
+        {
+            Debug.Log(getWebhook.Name);
+            if (getWebhook.Name.Equals("Testing Webhook"))
+            {
+                Debug.Log("Create Webhook Passed!");
+                Debug.Log("Get Webhook Passed");
+                UpdateWebhook();
+            } else {
+                throw new Exception("Failed to Get Webhook Name but operation shows successful: Raise an Issue!");                
+            }
+        }));
+    }
+
+    void UpdateWebhook()
+    {
+        var newName = "Testing Webhook - Updated";
+        var targetUri = new Uri("http://google.com");
+        webhook.Name = newName;
+        webhook.Target = targetUri;
+
+        // Update.
+        StartCoroutine(webhook.Commit(error => {
+            throw new Exception("Couldn't update Webhook: " + error.Message);
+        }, success => {
+            var checkUpdate = new Webhook(webhook.Id);
+            StartCoroutine(checkUpdate.Load(error => {
+                throw new Exception("Failed to get Updated Webhook: " + error.Message);
+            }, updateSuccess => {
+                if (checkUpdate.Name == newName) {
+                    Debug.Log("Update Webhook Passed!");
+                    ListWebhooks();
+                } else {
+                    throw new Exception("Failed to Get Updated Name but operation shows successful: Raise an Issue!");
+                }
+            }));
+        }));
+    }
+
+    void ListWebhooks() {
+        StartCoroutine(Webhook.ListWebhooks(error => {
+            throw new Exception("Failed to List Webhooks: " + error.Message);
+        }, webhooks => {
+            var found = false;
+            foreach (var wh in webhooks) {
+                if (wh.Id == webhook.Id) {
+                    Debug.Log("List Memberships Passed");
+                    DeleteWebhook();
+                    found = true;
+                }
+            }
+
+            if (!found) {
+                throw new Exception("List Memberships Failed!");
+            }
+        }));
+    }
+
+    void DeleteWebhook() {
+        StartCoroutine(webhook.Delete(error => {
+            throw new Exception("Failed to Delete Webhook: " + error.Message);
+        }, success => {
+            var checkDelete = new Webhook(webhook.Id);
+            StartCoroutine(checkDelete.Load(error => {
+                // This should error with a not found.
+                if (error.Message.Equals("webhook not found")) {
+                    Debug.Log("Delete Webhook Passed!");
+                    TestEnd();
+                } else {
+                    throw new Exception("Failed to get Delete Webhook: " + error.Message);
+                }
+            }, updateSuccess => {
+                throw new Exception("Managed to Get Deleted Webhook: Raise an Issue!");
+            }));
+        }));
+    }
+
+    void TestEnd() {
+        Debug.Log("***TestWebhooks Finished**");
+    }
 }

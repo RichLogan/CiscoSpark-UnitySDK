@@ -1,231 +1,139 @@
-﻿using UnityEngine;
-using UnityEngine.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using MiniJSON;
 
-namespace Cisco.Spark {
-	public class Webhook {
-		public string Id { get; private set; }
-		public string Name { get; set; }
-		public string TargetUrl { get; set;}
-		public string Resource { get; set; }
-		public string Event { get; set; }
-		public string Filter { get; set; }
-		public string OrgId { get; set; }
-		public string CreatedBy { get; set; }
-		public string AppId { get; set; }
-		public string Secret { get; set; }
-		public DateTime Created { get; private set; }
+namespace Cisco.Spark
+{
+    /// <summary>
+    /// A Webhook allows notification (via HTTP) when a specific event occurs on Spark.
+    /// </summary>
+    public class Webhook : SparkObject
+    {
+        /// <summary>
+        /// The SparkType this SparkObject implementation represents.
+        /// </summary>
+        internal override SparkType SparkType
+        {
+            get { return SparkType.Webhook; }
+        }
 
+        /// <summary>
+        /// A user-friendly name for this Webhook.
+        /// </summary>
+        public string Name { get; set; }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Webhook"/> class from a API JSON representation.*/
-		/// </summary>
-		/// <param name="data">The API returned Webhook data</param>
-		public Webhook(Dictionary<string, object> data) {
-			Id = (string)data ["id"];
-			Name = (string)data ["name"];
-			TargetUrl = (string)data ["targetUrl"];
-			Resource = (string)data ["resource"];
-			Event = (string)data ["event"];
-			OrgId = (string)data ["orgId"];
-			CreatedBy = (string)data ["createdBy"];
-			AppId = (string)data ["appId"];
-			Created = DateTime.Parse ((string)data ["created"]);
+        /// <summary>
+        /// The URL that receives POST requests for each event.
+        /// </summary>
+        public Uri Target { get; set; }
 
-			// Filter may not always be retrieved
-			object filter;
-			if (data.TryGetValue ("filter", out filter)) {
-				Filter = (string)data ["filter"];
-			}
+        /// <summary>
+        /// The resource type for the Webhook. Creating a webhook requires 'read' scope on the resource the webhook is for.
+        /// </summary>
+        public SparkType Resource { get; set; }
 
-			// Secret may not always be retrieved
-			object secret;
-			if (data.TryGetValue ("secret", out secret)) {
-				Secret = (string)data ["secret"];
-			}
-		}
-			
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Webhook"/> class locally.
-		/// </summary>
-		/// <param name="name">Name.</param>
-		/// <param name="targetUrl">Target URL.</param>
-		/// <param name="resource">Resource.</param>
-		/// <param name="event">Event.</param>
-		/// <param name="secret">Secret.</param>
-		/// <param name="filter">Filter.</param>
-		public Webhook(string name, string targetUrl, string resource, string @event, string secret, string filter = null) {
-			Name = name;
-			TargetUrl = targetUrl;
-			Resource = resource;
-			Event = @event;
-			Secret = secret;
-			Filter = filter;
-		}
+        /// <summary>
+        /// The event type for the Webhook.
+        /// </summary>
+        public string Event { get; set; }
 
-		/// <summary>
-		/// Commits the current state of the local Webhook object to Spark.
-		/// This will create a new webhook if it doesn't exist. 
-		/// </summary>
-		/// <param name="error">The error or message from Spark (if any)</param>
-		/// <param name="result">The created/updated Webhook from Spark (if any)</param>
-		public IEnumerator Commit(Action<SparkMessage> error, Action<Webhook> result) {
-			// Setup request from current state of Webhook object
-			var manager = Request.Instance;
+        /// <summary>
+        /// The filter that defines the webhook scope.
+        /// </summary>
+        public string Filter { get; set; }
 
-			// Webhook Data
-			var data = new Dictionary<string, string> ();
-			data ["name"] = Name;
-			data ["targetUrl"] = TargetUrl;
-			data ["resource"] = Resource;
-			data ["event"] = Event;
-			data ["secret"] = Secret;
-			// Filter is optional
-			if (Filter != null) {
-				data ["filter"] = Filter;	
-			}
+        /// <summary>
+        /// Secret used to generate payload signature.
+        /// </summary>
+        public string Secret { get; set; }
 
-			// Create or Update?
-			string resource;
-			string httpVerb;
-			if (Id == null) {
-				// Creating a new webhook
-				resource = "webhooks";
-				httpVerb = UnityWebRequest.kHttpVerbPOST;
-			} else {
-				// Updating a previous webhook
-				// Only changing name and targetUrl is currently
-				// supported
-				data.Remove ("resource");
-				data.Remove ("event");
-				data.Remove ("secret");
-				data.Remove ("filter");
-				resource = "webhooks/" + Id;
-				httpVerb = UnityWebRequest.kHttpVerbPUT;
-			}
+        /// <summary>
+        /// Creates a Webhook from an existing Spark side Webhook.
+        /// </summary>
+        /// <param name="id">Spark UID of the Webhook.</param>
+        public Webhook(string id)
+        {
+            Id = id;
+        }
 
-			// Make request
-			using (UnityWebRequest www = manager.Generate(resource, httpVerb)) {
-				byte[] raw_data = System.Text.Encoding.UTF8.GetBytes (Json.Serialize (data));
-				www.uploadHandler = new UploadHandlerRaw (raw_data);
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError("Failed to Create Webhook: " + www.error);
-				} else {
-					// Parse Response
-					var webhookData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (webhookData.ContainsKey ("message")) {
-						// Spark Error
-						error (new SparkMessage (webhookData));
-					} else {
-						// Create local Membership object
-						result(new Webhook (webhookData));
-					}
-				}
-			}
-		}
+        /// <summary>
+        /// Create a new Webhook locally.
+        /// </summary>
+        /// <param name="name">A user-friendly name for this Webhook.</param>
+        /// <param name="target">The URL that receives POST requests for each event.</param>
+        /// <param name="resource">The resource type for the Webhook. Creating a webhook requires 'read' scope on the resource the webhook is for.</param>
+        /// <param name="webhookEvent">The event type for the Webhook.</param>
+        /// <param name="filter">The filter that defines the webhook scope.</param>
+        /// <param name="secret">Secret used to generate payload signature.</param>
+        public Webhook(string name, Uri target, SparkType resource, string webhookEvent, string filter = null, string secret = null)
+        {
+            Name = name;
+            Target = target;
+            Resource = resource;
+            Event = webhookEvent;
+            Filter = filter;
+            Secret = secret;
+        }
 
-		/// <summary>
-		/// Delete this Webhook on Spark.
-		/// </summary>
-		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
-			if (Id != null) {
-				var manager = Request.Instance;
-				using (UnityWebRequest www = manager.Generate ("webhooks/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
-					yield return www.Send ();
-					if (www.isError) {
-						// Network Error
-						Debug.LogError ("Failed to Delete Webhook: " + www.error);
-					} else {
-						// Delete returns 204 on success
-						if (www.responseCode == 204) {
-							result (true);
-						} else {
-							// Delete Failed
-							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-							error (new SparkMessage (json));
-						}
-					}
-				}
-			}
-		}
-			
-		public static IEnumerator ListWebhooks(Action<SparkMessage> error, Action<List<Webhook>> result, string teamId = null, int max = 0, string type = null) {
-			// Build Request
-			var manager = Request.Instance;
-			var data = new Dictionary<string, string> ();
+        /// <summary>
+        /// Returns a dictionary representation of the object.
+        /// </summary>
+        /// <param name="fields">A specific list of fields to serialise.</param>
+        /// <returns>The serialised object as a Dictionary.</returns>
+        protected override Dictionary<string, object> ToDict(List<string> fields)
+        {
+            var data = base.ToDict();
+            data["name"] = Name;
+            data["targetUrl"] = Target.AbsoluteUri;
+            data["targetUrl"] = Target.AbsoluteUri;
+            data["resource"] = Resource.GetEndpoint();
+            data["event"] = Event.ToString();
+            data["filter"] = Filter;
+            data["secret"] = Secret;
+            return CleanDict(data, fields);
+        }
 
-			// Handle optional arguments
-			if (teamId != null) {
-				data ["teamId"] = teamId;
-			}
-			if (max != 0) {
-				data ["max"] = max.ToString ();	
-			}
-			if (type != null) {
-				data ["type"] = type;	
-			}
+        /// <summary>
+        /// Populates the object with the given data.
+        /// </summary>
+        /// <param name="data">Dictionary of data to load.</param>
+        protected override void LoadDict(Dictionary<string, object> data)
+        {
+            base.LoadDict(data);
+            Name = data["name"] as string;
+            Target = new Uri(data["targetUrl"] as string);
+            Resource = SparkTypeExtensions.FromEndpoint(data["resource"] as string);
+            Event = data["event"] as string;
 
-			// Optional Parameters to URL query
-			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
+            object filter;
+            if (data.TryGetValue("filter", out filter))
+            {
+                Filter = filter as string;
+            }
 
-			// Make Request
-			using (UnityWebRequest www = manager.Generate ("webhooks?" + queryString, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
+            object secret;
+            if (data.TryGetValue("secret", out secret))
+            {
+                Secret = secret as string;
+            }
+        }
 
-				if (www.isError) {
-					// Network error
-					Debug.LogError("Failed to List Webhooks: " + www.error);
-				} else {
-					// Request succeeded, parse response
-					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
+        /// <summary>
+        /// List's Webhooks to which the authenticated user owns.
+        /// </summary>
+        /// <param name="error">Error from Spark, if any.</param>
+        /// <param name="results">List of Webhooks.</param>
+        /// <param name="max">Maximum number of Webhooks to retrive.</param>
+        public static IEnumerator ListWebhooks(Action<SparkMessage> error, Action<List<Webhook>> results, int max = 0)
+        {
+            var constraints = new Dictionary<string, string>();
+            if (max > 0)
+            {
+                constraints.Add("max", max.ToString());
+            }
 
-					// Check for Spark side errors
-					if (json.ContainsKey ("message")) {
-						error (new SparkMessage (json));
-					} else {
-						// Convert to Membership objects
-						var webhooks = new List<Webhook> ();
-						var items = json ["items"] as List<object>;
-						foreach (var webhook in items) {
-							webhooks.Add (new Webhook (webhook as Dictionary<string, object>));
-						}
-						result (webhooks);
-					}
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets the webhook details.
-		/// </summary>
-		/// <returns>The webhook details.</returns>
-		/// <param name="webhookId">Webhook identifier.</param>
-		/// <param name="error">Error from Spark if any.</param>
-		/// <param name="result">Result Callback.</param>
-		public static IEnumerator GetWebhookDetails(string webhookId, Action<SparkMessage> error, Action<Webhook> result) {
-			var manager = Request.Instance;
-			using (UnityWebRequest www = manager.Generate ("webhooks/" + webhookId, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-
-				if (www.isError) {
-					// Network error
-					Debug.LogError (www.error);
-				} else {
-					// Parse Response
-					var webhookData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (webhookData.ContainsKey ("message")) {
-						// Error Callback
-						error (new SparkMessage (webhookData));
-					} else {
-						// Result callback
-						result(new Webhook (webhookData));
-					}
-				}
-			}
-		}
-	}
+            var listObjects = ListObjects<Webhook>(constraints, SparkType.Webhook, error, results);
+            yield return Request.Instance.StartCoroutine(listObjects);
+        }
+    }
 }

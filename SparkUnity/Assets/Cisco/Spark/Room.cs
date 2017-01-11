@@ -1,197 +1,181 @@
-﻿using UnityEngine;
-using UnityEngine.Networking;
-using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using MiniJSON;
+using System;
 
-namespace Cisco.Spark {
-	public class Room {
-		public string Id { get; private set; }
-		public string Title { get; set; }
-		public string RoomType { get; set;}
-		public bool IsLocked { get; set; }
-		public string TeamId { get; set; }
-		public DateTime Created { get; private set; }
-		public DateTime LastActivity { get; private set; }
+namespace Cisco.Spark
+{
+    /// <summary>
+    /// Virtual meeting place where <see cref="Person"/>s post <see cref="Message"/>s and collaborate.
+    /// </summary>
+    public class Room : SparkObject
+    {
+        /// <summary>
+        /// Title of the Room.
+        /// </summary>
+        public string Title { get; set; }
 
-		/// <summary>
-		/// Initializes a local instance of the <see cref="Cisco.Spark.Room"/> class.
-		/// </summary>
-		/// <param name="title">The title of the room</param>
-		/// <param name="teamId">The ID of the team owning the room</param>
-		public Room(string title, string teamId) {
-			Title = title;
-			TeamId = teamId;
-		}
+        /// <summary>
+        /// Type of the Room (currently Direct or Group).
+        /// </summary>
+        public RoomType Type { get; set; }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Room"/> class.
-		/// </summary>
-		/// <param name="data">Data.</param>
-		Room(Dictionary<string, object> data) {
-			Id = (string)data ["id"];
-			Title = (string)data ["title"];
-			RoomType = (string)data ["type"];
-			IsLocked = (bool)data ["isLocked"];
+        /// <summary>
+        /// True if only moderators/creator can add people to the Room.
+        /// </summary>
+        public bool IsLocked { get; set; }
 
-			Created = DateTime.Parse ((string) data ["created"]);
-			LastActivity = DateTime.Parse ((string) data ["lastActivity"]);
+        /// <summary>
+        /// The Team the Room is part of, if any.
+        /// </summary>
+        public Team Team { get; set; }
 
-			object teamid;
-			if (data.TryGetValue ("teamId", out teamid)) {
-				TeamId = (string)teamid;
-			}
-		}
+        /// <summary>
+        /// The DateTime of the last activity in the room.
+        /// </summary>
+        public DateTime LastActivity { get; private set; }
 
-		/// <summary>
-		/// Commit the Room to the Spark Service
-		/// </summary>
-		/// <param name="error">Error from Spark.</param>
-		/// <param name="result">The resultant Spark Room.</param>
-		public IEnumerator Commit(Action<SparkMessage> error, Action<Room> result) {
-			// Setup request from current state of Room object
-			var manager = Request.Instance;
+        /// <summary>
+        /// The Person who created the Room.
+        /// </summary>
+        public Person Creator { get; private set; }
 
-			// Room Data
-			var data = new Dictionary<string, string> ();
-			data ["title"] = Title;
-			data ["teamId"] = TeamId;
+        internal override SparkType SparkType
+        {
+            get { return SparkType.Room; }
+        }
 
-			// Create or Update?
-			string resource;
-			string httpVerb;
-			if (Id == null) {
-				// Creating a new room
-				resource = "rooms";
-				httpVerb = UnityWebRequest.kHttpVerbPOST;
-			} else {
-				// Updating a previous room
-				resource = "rooms/" + Id;
-				httpVerb = UnityWebRequest.kHttpVerbPUT;
+        /// <summary>
+        /// Constructor to build representation of existing Spark-side Room.
+        /// Use Load() to populate rest of properties from Spark.
+        /// </summary>
+        /// <param name="id">Spark UID of the Room.</param>
+        public Room(string id)
+        {
+            Id = id;
+        }
 
-				// Updating TeamID currently unuspported
-				if (data["teamId"] != null) {
-					data.Remove ("teamId");
-					Debug.Log ("Changing Team ID currently unsupported");
-				}
-			}
+        /// <summary>
+        /// Constructor to build a new Room locally.
+        /// </summary>
+        /// <param name="title">The title of the Room.</param>
+        /// <param name="team">The team the room should be assigned to, if any.</param>
+        public Room(string title, Team team)
+        {
+            Title = title;
+            Team = team;
+        }
 
-			// Make request
-			using (UnityWebRequest www = manager.Generate(resource, httpVerb)) {
-				byte[] raw_data = System.Text.Encoding.UTF8.GetBytes (Json.Serialize (data));
-				www.uploadHandler = new UploadHandlerRaw (raw_data);
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError("Failed to Create Room: " + www.error);
-				} else {
-					var roomData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (roomData.ContainsKey ("message")) {
-						error (new SparkMessage (roomData));
-					} else {
-						result(new Room (roomData));
-					}
-				}
-			}
-		}
 
-		/// <summary>
-		/// Delete the specified Room on Spark.
-		/// </summary>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Success/Fail.</param>
-		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
-			if (Id != null) {
-				var manager = Request.Instance;
-				using (UnityWebRequest www = manager.Generate ("rooms/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
-					yield return www.Send ();
-					if (www.isError) {
-						Debug.LogError ("Failed to Delete Room: " + www.error);
-					} else {
-						// Delete returns 204 on success
-						if (www.responseCode == 204) {
-							result (true);
-						} else {
-							// Delete Failed
-							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-							error (new SparkMessage (json));
-						}
-					}
-				}
-			}
-		}
+        /// <summary>
+        /// Lists all Messages in the Room matching the given constraints.
+        /// </summary>
+        /// <param name="error">Error callback from Spark, if any.</param>
+        /// <param name="results">Results callback.</param>
+        /// <param name="mentionedPeople">Will only return messages where these people are mentioned.</param>
+        /// <param name="before">Will only return messages before this DateTime.</param>
+        /// <param name="beforeMessage">Will only return messages before this Message was posted.</param>
+        /// <param name="max">Maximum number of messages to return.</param>
+        public IEnumerator ListMessages(Action<SparkMessage> error, Action<List<Message>> results, List<Person> mentionedPeople = null, DateTime? before = null, Message beforeMessage = null, int max = 0)
+        {
+            // Room must exist on Spark.
+            if (Id == null)
+            {
+                throw new Exception("Room ID must be set before listing messages.");
+            }
 
-		/// <summary>
-		/// Lists the rooms matching the given filters that you are a member of.
-		/// </summary>
-		/// <returns>List of rooms.</returns>
-		/// <param name="teamId">Show rooms belonging to a specific team.</param>
-		/// <param name="max">Maximum number of rooms to return.</param>
-		/// <param name="type">Type of room to search for.</param>
-		/// <param name="error">Any error from Spark.</param>
-		/// <param name="result">List of rooms.</param>
-		public static IEnumerator ListRooms(Action<SparkMessage> error, Action<List<Room>> result, string teamId = null, int max = 0, string type = null) {
-			// Build Request
-			var manager = Request.Instance;
-			var data = new Dictionary<string, string> ();
+            // Search constraints.
+            var constraints = new Dictionary<string, string>();
+            constraints["roomId"] = Id;
 
-			// Handle optional arguments
-			if (teamId != null) {
-				data ["teamId"] = teamId;
-			}
-			if (max != 0) {
-				data ["max"] = max.ToString ();
-			}
-			if (type != null) {
-				data ["type"] = type;
-			}
+            if (mentionedPeople != null)
+            {
+                var serialisedString = new List<string>();
+                foreach (var person in mentionedPeople)
+                {
+                    serialisedString.Add(person.Id);
+                }
+                var queryString = MiniJSON.Json.Serialize(serialisedString);
+                constraints["mentionedPeople"] = queryString;
+            }
 
-			// Make Request
-			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
-			using (UnityWebRequest www = manager.Generate ("rooms?" + queryString, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError ("Failed to List Rooms: " + www.error);
-				} else {
-					// Convert to Room objects
+            if (before != null)
+            {
+                constraints["before"] = before.ToString();
+            }
 
-					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (json.ContainsKey ("message")) {
-						error (new SparkMessage(json));
-					} else {
-						var rooms = new List<Room> ();
-						var items = json ["items"] as List<object>;
-						foreach (Dictionary<string, object> room_json in items) {
-							rooms.Add(new Room (room_json));
-						}
-						result (rooms);
-					}
-				}
-			}
-		}
+            if (beforeMessage != null)
+            {
+                constraints["beforeMessage"] = beforeMessage.Id;
+            }
 
-		/// <summary>
-		/// Gets the room details.
-		/// </summary>
-		/// <returns>The Room object</returns>
-		/// <param name="roomId">Room identifier</param>
-		/// <param name="error">Error from Spark, if any.</param>
-		/// <param name="result">The returned Room from Spark.</param>
-		public static IEnumerator GetRoomDetails(string roomId, Action<SparkMessage> error, Action<Room> result) {
-			var manager = Request.Instance;
-			using (UnityWebRequest www = manager.Generate ("rooms/" + roomId, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError ("Failed to Retrieve Room: " + www.error);
-				} else {
-					var roomDetails = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (roomDetails.ContainsKey ("message")) {
-						error (new SparkMessage (roomDetails));
-					} else {
-						result (new Room (roomDetails));
-					}
-				}
-			}
-		}
-	}
+            if (max > 0)
+            {
+                constraints["max"] = max.ToString();
+            }
+
+            var listObjects = ListObjects<Message>(constraints, SparkType.Message, error, results);
+            yield return Request.Instance.StartCoroutine(listObjects);
+        }
+
+        /// <summary>
+        /// Returns a dictionary representation of the object.
+        /// </summary>
+        /// <returns>The Dictionary.</returns>
+        /// <param name="fields">A specific list of fields to serialise.</param>
+        protected override Dictionary<string, object> ToDict(List<string> fields = null)
+        {
+            // Constraint checks.
+            if (Title == null)
+            {
+                throw new Exception("Room title can never be null.");
+            }
+            var data = base.ToDict();
+            data["title"] = Title;
+            return CleanDict(data, fields);
+        }
+
+        /// <summary>
+        /// Populates an object with data retrieved from Spark.
+        /// </summary>
+        /// <param name="data">Data.</param>
+        protected override void LoadDict(Dictionary<string, object> data)
+        {
+            base.LoadDict(data);
+            Title = data["title"] as string;
+            Type = RoomTypeExtensions.FromApi(data["type"] as string);
+            IsLocked = (bool)data["isLocked"];
+            LastActivity = DateTime.Parse(data["lastActivity"] as string);
+            Creator = new Person(data["creatorId"] as string);
+        }
+
+        /// <summary>
+        /// Lists all Rooms the registered user is a member of, matching the given filters.
+        /// </summary>
+        /// <param name="error">Error from Spark, if any.</param>
+        /// <param name="results">The restulting list of Rooms.</param>
+        /// <param name="team">The Team to filter on.</param>
+        /// <param name="max">The maximum number of rooms to return.</param>
+        /// <param name="type">The RoomType of Room to look for.</param>
+        public static IEnumerator ListRooms(Action<SparkMessage> error, Action<List<Room>> results, Team team = null, int max = 0, RoomType type = RoomType.Unsupported)
+        {
+            var constraints = new Dictionary<string, string>();
+            if (team != null)
+            {
+                constraints.Add("teamId", team.Id);
+            }
+
+            if (max > 0)
+            {
+                constraints.Add("max", max.ToString());
+            }
+
+            if (type != RoomType.Unsupported)
+            {
+                constraints.Add("type", type.ToApi());
+            }
+
+            var listObjects = ListObjects<Room>(constraints, SparkType.Room, error, results);
+            yield return Request.Instance.StartCoroutine(listObjects);
+        }
+    }
 }

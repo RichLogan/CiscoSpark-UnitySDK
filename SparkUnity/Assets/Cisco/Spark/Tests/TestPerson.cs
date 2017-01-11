@@ -1,68 +1,101 @@
 using UnityEngine;
 using Cisco.Spark;
 
-public class TestPerson : MonoBehaviour {
+public class TestPerson : MonoBehaviour
+{
 
-	void Start() {
-		// Error Count
-		var errorCount = 0;
-		StartCoroutine (Person.ListPeople (listPeopleError => {
-			errorCount++;
-			Debug.LogError("List people failed: " + listPeopleError.Message);
-		}, people => {
-			if (people.Count != 1) {
-				errorCount++;
-				Debug.LogError("rilogan@cisco.com should return 1 record");
-			}
-				
-			if (people[0].DisplayName != "Rich Logan") {
-				errorCount++;
-				Debug.Log("List People not returning details correctly");
-			}
+    public string TestPersonId = "";
 
-			StartCoroutine (Person.GetPersonDetails (people[0].Id, getPersonError => {
-				errorCount++;
-				Debug.LogError("Get Person Details failed: " + getPersonError.Message);
-			},person => {
-				if (person.DisplayName != "Rich Logan") {
-					errorCount++;
-					Debug.Log("Display name not retrieved correctly");
-				}
+    // Create.
+    // GetPersonDetails.
+    // Update.
+    // Delete.
+    // Get Own Details.
 
-				if (person.FirstName != "Rich") {
-					errorCount++;
-					Debug.Log("First name not retrieved correctly");
-				}
+    bool started = false;
 
-				if (person.LastName != "Logan") {
-					errorCount++;
-					Debug.Log("Last name not retrieved correctly");
-				}
+    void Update()
+    {
+        // Wait for Request to initialise.
+        if (Request.Instance.SetupComplete && !started)
+        {
+            started = true;
+            CreatePerson();
+        }
+    }
 
-				StartCoroutine (Person.GetPersonDetails (getPersonAgain => {
-					errorCount++;
-					Debug.LogError("Get Person Details failed: " + getPersonAgain.Message);
-				}, callback => {
-					Debug.Log("Authenticated user is: " + callback.DisplayName);
+    void CreatePerson()
+    {
+        // Create can only be used by an admin.
+        // TODO: CreatePerson Test.
+        GetPersonDetails();
+    }
 
-					StartCoroutine (person.DownloadAvatar (avatarError => {
-						errorCount++;
-						Debug.LogError("List people failed: " + avatarError.Message);
-					}, texture => {
-						if (texture.width <= 0) {
-							Debug.Log("Couldn't download user's avatar");
-							errorCount++;
-						}
+    void GetPersonDetails()
+    {
+        var newPerson = new Person(TestPersonId);
+        var getPersonDetails = newPerson.Load(error =>
+        {
+            Debug.LogError(error.Message);
+        }, success =>
+        {
+            if (newPerson.DisplayName != null)
+            {
+                Debug.Log("Get Person Details Passed!");
+                UpdatePerson();
+            }
+        });
+        StartCoroutine(getPersonDetails);
+    }
 
-						// Finish
-						if (errorCount > 0) {
-							Debug.LogError("Some tests failed");
-						} else {
-							Debug.Log ("All tests passed");
-						}
-					}));
-				}));
-			}));
-		}, "rilogan@cisco.com"));
-	}
+    void UpdatePerson()
+    {
+        // TODO: UpdatePerson test.
+        DeletePerson();
+    }
+
+    void DeletePerson()
+    {
+        // TODO: DeletePerson test.
+        GetOwnDetails();
+    }
+
+    void GetOwnDetails()
+    {
+        if (Person.AuthenticatedUser.DisplayName != null)
+        {
+            Debug.Log("Get Own Details Passed!");
+        }
+        else
+        {
+            Debug.LogError("Get Own Details Failed");
+        }
+        DownloadAvatar();
+    }
+
+    void DownloadAvatar()
+    {
+        var avatar = new Person(TestPersonId);
+        var loadRoutine = avatar.Load(error =>
+        {
+            Debug.LogError("Failed to Load person details during Avatar test");
+        }, success =>
+        {
+            var downloadRoutine = avatar.Avatar.Download(textureSuccess =>
+            {
+                var testObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
+                testObject.GetComponent<Renderer>().material.mainTexture = avatar.Avatar.Texture;
+                if (avatar.Avatar.Texture.width > 0)
+                {
+                    Debug.Log("Avatar download Passed");
+                }
+                else
+                {
+                    Debug.LogError("Avatar download got an empty texture");
+                }
+            });
+            StartCoroutine(downloadRoutine);
+        });
+        StartCoroutine(loadRoutine);
+    }
 }

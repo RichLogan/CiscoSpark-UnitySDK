@@ -1,78 +1,96 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cisco.Spark;
 
 public class TestTeam : MonoBehaviour {
-	void Start () {
-		var errorCount = 0;
-		// List Teams
-		StartCoroutine (Team.ListTeams (listError => {
-			errorCount++;
-			Debug.LogError ("List Teams failed: " + listError.Message);
-		}, teams => {
-			if (teams.Count > 0) {
-				Debug.Log ("ListTeams passed");
-			} else {
-				errorCount++;
-				Debug.LogError ("ListTeams failed");
-			}
 
-			// Get Team Details
-			StartCoroutine (Team.GetTeamDetails (teams[0].Id, detailsError => {
-				errorCount++;
-				Debug.LogError ("List Teams failed: " + detailsError.Message);
-			}, retrievedTeam => {
-				if (retrievedTeam.Name != teams[0].Name) {
-					errorCount++;
-					Debug.LogError("GetTeamDetails failed");
-				} else {
-					Debug.Log("GetTeamDetails passed");
-				}
+    string teamId;
+    string teamName = "Cisco Spark Unity Test Team";
 
-				// Create Team
-				const string OriginalName = "Unity SDK Test Team";
-				var t = new Team(OriginalName);
-				StartCoroutine (t.Commit (commitError => {
-					errorCount++;
-					Debug.LogError("GetTeamDetails failed: " + commitError.Message);	
-				}, createdTeam => {
-					t = createdTeam;
-					if (t.Id == null) {
-						errorCount++;
-						Debug.LogError ("Create Team failed");
-					} else {
-						Debug.Log("Create Team passed");
-					}
+    void Start() {
+        CreateTeam();
+    }
 
-					// Update Team
-					const string NewName = OriginalName + "RENAMED";
-					t.Name = NewName;
-					StartCoroutine (t.Commit (updateError => {
-						errorCount++;
-						Debug.LogError("Update failed: " + updateError.Message);
-					}, updatedTeam => {
-						t = updatedTeam;
-						if (t.Name != NewName) {
-							errorCount++;
-							Debug.LogError ("Update Team failed");
-						} else {
-							Debug.Log("Update Team passed");
-						}
+    void CreateTeam() {
+        var team = new Team();
+        team.Name = teamName;
+        StartCoroutine(team.Commit(error => {
+            Debug.LogError("Create Team Failed: " + error.Message);
+        }, success => {
+            teamId = team.Id;
+            LoadTeam();
+        }));
+    }
 
-						// Delete Team
-						StartCoroutine (t.Delete (deleteError => {
-							errorCount++;
-							Debug.LogError("Delete team failed: " + deleteError.Message);
-						}, deleteSuccess => {
-							// Error Report
-							if (errorCount > 0) {
-								Debug.LogError(errorCount + " Team tests failed");
-							} else {
-								Debug.Log("All Team tests passed");
-							}
-						}));
-					}));
-				}));
-			}));
-		}));
-	}
+    void LoadTeam() {
+        var team = new Team(teamId);
+        StartCoroutine(team.Load(error => {
+            Debug.LogError("Failed to load Team: " + error.Message);
+        }, success => {
+            if (team.Name.Equals(teamName)) {
+                // Create is known to have passed here.
+                Debug.Log("Create Team Passed!");
+
+                // Load is also known to have passed here.
+                Debug.Log("Get Team Passed!");
+
+                // List Teams.
+                UpdateTeam();
+            }
+        }));
+    }
+
+    void UpdateTeam() {
+        var team = new Team(teamId);
+        teamName = "Cisco Spark Unity Test Team - Updated";
+        team.Name = teamName;
+        StartCoroutine(team.Commit(error => {
+            Debug.LogError("Update Team Failed: " + error.Message);
+        }, success => {
+            ListTeams();
+        }));
+    }
+
+    void ListTeams() {
+        StartCoroutine(Team.ListTeams(error => {
+            Debug.LogError("List Teams Failed: " + error.Message);
+        }, teams => {
+            bool success = false;
+            foreach (var team in teams) {
+                if (team.Name.Equals(teamName)) {
+                    success = true;
+                }
+            }
+            if (success) {
+                // Update is known to have passed here.
+                Debug.Log("Update Team Passed!");
+
+                // List Teams Passed!
+                Debug.Log("List Teams Passed!");
+                DeleteTeam();
+            }
+        }));
+    }
+
+    void DeleteTeam() {
+        var team = new Team(teamId);
+        StartCoroutine(team.Delete(error => {
+            Debug.LogError("Delete Team Failed: " + error.Message);
+        }, success => {
+            // Check Deleted.
+            var checkDelete = new Team(teamId);
+            StartCoroutine(checkDelete.Load(error => {
+                Debug.Log(error.Message);
+                if (error.Message.Equals("Could not find teams.")) {
+                    // Passed!
+                    Debug.Log("Delete Team Passed!");
+                } else {
+                    // Actual error.
+                    Debug.LogError("Delete Team Failed: " + error.Message);
+                }
+            }, deleteTestSuccess => {
+                // This shouldn't happen!
+                Debug.LogError("Delete Team Failed!");
+            }));
+        }));
+    }
 }

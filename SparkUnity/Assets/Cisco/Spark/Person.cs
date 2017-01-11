@@ -1,165 +1,165 @@
-﻿using UnityEngine;
-using UnityEngine.Networking;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using MiniJSON;
 
-namespace Cisco.Spark {
-	public class Person {
-		public string Id { get; private set;}
-		public string DisplayName { get; set;}
-		public string FirstName { get; set;}
-		public string LastName { get; set;}
-		public string Avatar { get; set;}
-		public DateTime Created { get; private set;}
-		public List<string> Emails { get; set;}
-		public string Status { get; private set;}
+namespace Cisco.Spark
+{
+    /// <summary>
+    /// A registered user of the Spark platform.
+    /// </summary>
+    public class Person : SparkObject
+    {
+        /// <summary>
+        /// The SparkType the implementation represents.
+        /// </summary>
+        internal override SparkType SparkType
+        {
+            get { return SparkType.Person; }
+        }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Person"/>
-		/// class from an existing Spark record
-		/// </summary>
-		/// <param name="details">Person data from Cisco Spark</param>
-		Person(Dictionary<string, object> details) {
-			Id = (string) details ["id"];
-			DisplayName = (string) details ["displayName"];
-			FirstName = (string) details ["firstName"];
-			LastName = (string) details ["lastName"];
-			Avatar = (string) details["avatar"];
-			Created = DateTime.Parse ((string) details ["created"]);
+        /// <summary>
+        /// Full name of the Person.
+        /// </summary>
+        public string DisplayName { get; set; }
 
-			// Status not always implemented
-			object status;
-			if (details.TryGetValue ("status", out status)) {
-				Status = (string) details ["status"];
-			}
+        /// <summary>
+        /// Friendly name of the Person.
+        /// </summary>
+        public string NickName { get; set; }
 
-			object emails;
-			if (details.TryGetValue ("emails", out emails)) {
-				Emails = new List<string> ();
-				var listOfEmails = emails as List<object>;
-				foreach (var email in listOfEmails) {
-					Emails.Add (email as string);
-				}
-			}
-		}
+        /// <summary>
+        /// First name of the Person.
+        /// </summary>
+        public string FirstName { get; set; }
 
-		/// <summary>
-		/// Downloads the user's avatar as a Texture
-		/// </summary>
-		/// <returns>Texture of an avatar</returns>
-		/// <param name="error">Error if any from Spark</param>
-		/// <param name="callback">Callback.</param>
-		public IEnumerator DownloadAvatar(Action<SparkMessage> error, Action<Texture> callback) {
-			UnityWebRequest www = UnityWebRequest.GetTexture (Avatar);
-			yield return www.Send ();
-			if (www.isError) {
-				Debug.LogError ("Failed to Download Avatar: " + www.error);
-			} else {
-				var texture = ((DownloadHandlerTexture)www.downloadHandler).texture;
-				if (texture) {
-					callback (texture);
-				} else {
-					// TODO: Check what happens on failed avatar calls
-					Debug.LogError ("Download avatar failed. Check implementation.");
-					Debug.LogError (www.downloadHandler.text);
-					error (null);
-				}
-			}
-		}
+        /// <summary>
+        /// Last name of the Person.
+        /// </summary>
+        public string LastName { get; set; }
 
-		/// <summary>
-		/// Gets details of the currently authenticated user from Spark.
-		/// </summary>
-		/// <returns>The Person object.</returns>
-		/// <param name="error">Error.</param>
-		/// <param name="callback">Callback.</param>
-		static public IEnumerator GetPersonDetails(Action<SparkMessage> error, Action<Person> callback) {
-			yield return GetPersonDetails ("me", error, callback);
-		}
+        /// <summary>
+        /// Display picture of the Person.
+        /// </summary>
+        public Avatar Avatar { get; set; }
 
-		/// <summary>
-		/// Gets details of a Person from Spark
-		/// </summary>
-		/// <returns>The Person object</returns>
-		/// <param name="personId">Person identifier.</param>
-		/// <param name="error">Error from Spark</param>
-		/// <param name="result">Callback.</param>
-		public static IEnumerator GetPersonDetails(string personId, Action<SparkMessage> error, Action<Person> result) {
-			var manager = Request.Instance;
-			using (UnityWebRequest www = manager.Generate ("people/" + personId, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
+        /// <summary>
+        /// List of emails associated with this person.
+        /// </summary>
+        public List<string> Emails { get; set; }
 
-				if (www.isError) {
-					// Network error
-					Debug.LogError (www.error);
-				} else {
-					// Parse Response
-					var personData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (personData.ContainsKey ("message")) {
-						// Error Callback
-						error (new SparkMessage (personData));
-					} else {
-						// Result callback
-						result(new Person (personData));
-					}
-				}
-			}
-		}
+        /// <summary>
+        /// Holds a reference to the currently authenticated <see cref="Person"/> given
+        /// by the authentication token in Request.
+        /// </summary>
+        /// <returns>Currently authenticated <see cref="Person"/>.</returns>
+        public static Person AuthenticatedUser { get; internal set; }
 
-		/// <summary>
-		/// Lists the people matched by the query
-		/// </summary>
-		/// <returns>List of People</returns>
-		/// <param name="error">Error from Spark.</param>
-		/// <param name="result">Callback.</param>
-		/// <param name="email">Email to search on.</param>
-		/// <param name="displayName">Display name to search on.</param>
-		/// <param name="max">Max number of people to return.</param>
-		public static IEnumerator ListPeople(Action<SparkMessage> error, Action<List<Person>> result, string email = null, string displayName = null, int max = 0) {
-			if (email == null && displayName == null) {
-				Debug.LogError ("Email or displayName should be specified.");
-			}
+        // TODO: New Objects for these.
+        // public Organization Organization {get; set;}
+        // public List<Role> Roles {get; set;}
+        // public List<License> Licenses {get; set;}
+        // public TimeZone Timezone {get; set;}
+        // public string Status {get; set;}
 
-			var manager = Request.Instance;
+        /// <summary>
+        /// Builds representation of existing Spark-side
+        /// Person. Use <see cref="Load"/> to populate rest of properties from Spark.
+        /// </summary>
+        /// <param name="id">Spark UID of the Person.</param>
+        public Person(string id)
+        {
+            Id = id;
+        }
 
-			// Optional Parameters
-			var data = new Dictionary<string, string> ();
-			if (email != null) {
-				data ["email"] = email;
-			}
-			if (displayName != null) {
-				data ["displayName"] = displayName;
-			}
-			if (max != 0) {
-				data ["max"] = max.ToString ();
-			}
+        /// <summary>
+        /// Returns a dictionary representation of the object.
+        /// </summary>
+        /// <returns>The Dictionary.</returns>
+        /// <param name="fields">A specific list of fields to serialise.</param>
+        protected override Dictionary<string, object> ToDict(List<string> fields = null)
+        {
+            var data = base.ToDict();
+            // TODO: Add Person specific fields.
+            return CleanDict(data, fields);
+        }
 
-			// Optional Parameters to URL query
-			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
+        // TODO: List Rooms and List Teams?
 
-			// Make Request
-			using (UnityWebRequest www = manager.Generate ("people?" + queryString, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError ("Failed to List People");
-				} else {
-					// Convert to Person objects
-					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (json.ContainsKey ("message")) {
-						error (new SparkMessage (json));
-					} else {
-						// Convert to Membership objects
-						var people = new List<Person> ();
-						var items = json ["items"] as List<object>;
-						foreach (var person in items) {
-							people.Add (new Person (person as Dictionary<string, object>));
-						}
-						result (people);
-					}
-				}
-			}
-		}
-	}
+        /// <summary>
+        /// Populates an object with data recieved from Spark.
+        /// </summary>
+        /// <param name="data">Data.</param>
+        protected override void LoadDict(Dictionary<string, object> data)
+        {
+            base.LoadDict(data);
+            DisplayName = data["displayName"] as string;
+            NickName = data["nickName"] as string;
+            FirstName = data["firstName"] as string;
+            LastName = data["lastName"] as string;
+
+            // Avatar.
+            var avatarUri = new Uri(data["avatar"] as string);
+            Avatar = new Avatar(avatarUri);
+
+            // Emails.
+            Emails = new List<string>();
+            foreach (var obj in data["emails"] as List<object>)
+            {
+                Emails.Add(obj as string);
+            }
+            // TODO: Add Person specific fields.
+        }
+
+        /// <summary>
+        /// Sets <see cref="AuthenticatedUser"/> to the currently authenticated user.
+        /// </summary>
+        /// <param name="error">Error from Spark, if any.</param>
+        /// <param name="success">True if the operation completed successfully.</param>
+        public static IEnumerator GetMyself(Action<SparkMessage> error, Action<bool> success)
+        {
+            var getRecordRoutine = Request.Instance.GetRecord("me", SparkType.Person, error, dict =>
+            {
+                var id = dict["id"] as string;
+                AuthenticatedUser = new Person(id);
+                AuthenticatedUser.LoadDict(dict);
+                success(true);
+            });
+            yield return getRecordRoutine;
+        }
+
+        /// <summary>
+        /// Lists all Person objects found on Spark matching the given criteria.
+        /// </summary>
+        /// <param name="error">Error from Spark, if any.</param>
+        /// <param name="results">List of People found.</param>
+        /// <param name="email">An email address to filter on.</param>
+        /// <param name="displayName">A display name to filter on.</param>
+        /// <param name="max">Maximum number of results to return.</param>
+        public static IEnumerator ListPeople(Action<SparkMessage> error, Action<List<Person>> results, string email = null, string displayName = null, int max = 0)
+        {
+            // TODO: Admins are not bound by this rule.
+            if (email == null && displayName == null)
+            {
+                throw new Exception("One of Email or Display Name must be provided when listing People.");
+            }
+
+            var constraints = new Dictionary<string, string>();
+            if (email != null)
+            {
+                constraints.Add("email", email);
+            }
+            else if (displayName != null)
+            {
+                constraints.Add("displayName", displayName);
+            }
+
+            if (max > 0)
+            {
+                constraints.Add("max", max.ToString());
+            }
+
+            var listObjects = ListObjects<Person>(constraints, SparkType.Person, error, results);
+            yield return Request.Instance.StartCoroutine(listObjects);
+        }
+    }
 }

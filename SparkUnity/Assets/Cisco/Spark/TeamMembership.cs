@@ -1,224 +1,117 @@
-﻿using UnityEngine;
-using UnityEngine.Networking;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using MiniJSON;
 
-namespace Cisco.Spark {
-	public class TeamMembership {
-		public string Id { get; private set; }
-		public string TeamId { get; set; }
-		public string PersonId { get; set; }
-		public string PersonEmail { get; set; }
-		public string PersonDisplayName { get; set; }
-		public bool IsModerator { get; set; }
-		public DateTime Created { get; private set; }
+namespace Cisco.Spark
+{
+    /// <summary>
+    /// TeamMembership representats a <see cref="Person"/>'s relationship to a <see cref="Team"/>.
+    /// </summary>
+    public class TeamMembership : SparkObject
+    {
+        /// <summary>
+        /// The <see cref="Team"/> the Membership belongs to.
+        /// </summary>
+        public Team Team { get; set; }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.TeamMembership"/> class.
-		/// </summary>
-		public TeamMembership() { }
+        /// <summary>
+        /// The <see cref="Person"/> the Membership belongs to.
+        /// </summary>
+        public Person Person { get; set; }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.TeamMembership"/> class.
-		/// </summary>
-		/// <param name="teamId">Team identifier.</param>
-		/// <param name="personId">Person identifier.</param>
-		/// <param name="personEmail">Person email.</param>
-		/// <param name="isModerator">If set to <c>true</c> is moderator.</param>
-		public TeamMembership(string teamId, string personId=null, string personEmail=null, bool isModerator=false) {
-			// Argument checking
-			if (personId == null && personEmail == null) {
-				throw new ArgumentNullException ("personId","One of PersonId and PersonEmail must be given");
-			}
-			TeamId = teamId;
-			PersonId = personId;
-			PersonEmail = personEmail;
-			IsModerator = isModerator;
-		}
+        /// <summary>
+        /// True if the <see cref="Person"/> is a moderator of the Team.
+        /// </summary>
+        public bool IsModerator { get; set; }
 
-		/// <summary>
-		/// Initializes a new instance of <see cref="Cisco.Spark.TeamMembership"/> from Spark.
-		/// </summary>
-		/// <param name="teamMembershipData">Team Membership data.</param>
-		TeamMembership(Dictionary<string, object> teamMembershipData) {
-			try {
-				Id = teamMembershipData ["id"] as string;
-				TeamId = teamMembershipData ["teamId"] as string;
-				PersonId = teamMembershipData ["personId"] as string;
-				PersonEmail = teamMembershipData ["personEmail"] as string;
-				PersonDisplayName = teamMembershipData ["personDisplayName"] as string;
-				IsModerator = (bool) teamMembershipData ["isModerator"];
-				Created = DateTime.Parse ((string) teamMembershipData ["created"]);
-			} catch (KeyNotFoundException) {
-				Debug.Log ("Couldn't parse Team Membership");
-			}
-		}
+        /// <summary>
+        /// <see cref="SparkType"/> this <see cref="SparkObject"/> implementation represents.
+        /// </summary>
+        internal override SparkType SparkType
+        {
+            get { return SparkType.TeamMembership; }
+        }
 
-		/// <summary>
-		/// Commit the specified error and result.
-		/// </summary>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		public IEnumerator Commit(Action<SparkMessage> error, Action<TeamMembership> result) {
-			var manager = Request.Instance;
+        /// <summary>
+        /// Constructor to build representation of existing Spark-side TeamMembership.
+        /// Use Load() to populate rest of properties from Spark.
+        /// </summary>
+        /// <param name="id">Spark UID of the TeamMembership.</param>
+        public TeamMembership(string id)
+        {
+            Id = id;
+        }
 
-			// Membership Data
-			var data = new Dictionary<string, string> ();
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cisco.Spark.TeamMembership"/> class.
+        /// </summary>
+        /// <param name="team">The Team of the TeamMembership.</param>
+        /// <param name="person">The person belonging to the TeamMembership.</param>
+        /// <param name="isModerator">True if this member will be a moderator.</param>
+        public TeamMembership(Team team, Person person, bool isModerator = false)
+        {
+            Team = team;
+            Person = person;
+            IsModerator = isModerator;
+        }
 
-			// Create or Update?
-			string resource;
-			string httpVerb;
-			if (Id == null) {
-				// Creating a new Membership
-				data ["teamId"] = TeamId;
-				data ["personId"] = PersonId;
-				data ["personEmail"] = PersonEmail;
-				data ["isModerator"] = IsModerator.ToString ();
-				resource = "team/memberships";
-				httpVerb = UnityWebRequest.kHttpVerbPOST;
-			} else {
-				// Updating an existing Membership
-				// Only changing <see cref="Cisco.Spark.Membership.IsModerator"/> is currently supported. 
-				data ["isModerator"] = IsModerator.ToString ();
-				resource = "team/memberships/" + Id;
-				httpVerb = UnityWebRequest.kHttpVerbPUT;
-			}
+        /// <summary>
+        /// Returns a dictionary representation of the object.
+        /// </summary>
+        /// <returns>The Dictionary.</returns>
+        /// <param name="fields">A specific list of fields to serialise.</param>
+        protected override Dictionary<string, object> ToDict(List<string> fields = null)
+        {
+            // Serialise to dictionary.
+            var data = base.ToDict();
+            data["teamId"] = Team.Id;
+            data["personId"] = Person.Id;
+            data["isModerator"] = IsModerator;
+            return CleanDict(data, fields);
+        }
 
-			// Make request
-			using (UnityWebRequest www = manager.Generate(resource, httpVerb)) {
-				byte[] raw_data = System.Text.Encoding.UTF8.GetBytes (Json.Serialize (data));
-				www.uploadHandler = new UploadHandlerRaw (raw_data);
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError("Failed to Create Team Membership: " + www.error);
-				} else {
-					// Parse Response
-					var teamMembershipData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (teamMembershipData.ContainsKey ("message")) {
-						// Spark Error
-						error (new SparkMessage (teamMembershipData));
-					} else {
-						// Create local TeamMembership object
-						result(new TeamMembership (teamMembershipData));
-					}
-				}
-			}
-		}
+        /// <summary>
+        /// Populates the TeamMembership with data from Spark.
+        /// </summary>
+        /// <param name="data">Dictionary of TeamMembership data.</param>
+        protected override void LoadDict(Dictionary<string, object> data)
+        {
+            base.LoadDict(data);
+            var teamId = data["teamId"] as string;
+            Team = new Team(teamId);
+            var personId = data["personId"] as string;
+            Person = new Person(personId);
+            IsModerator = (bool)data["isModerator"];
+        }
 
-		/// <summary>
-		/// Delete the specified error and result.
-		/// </summary>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
-			if (Id != null) {
-				var manager = Request.Instance;
-				using (UnityWebRequest www = manager.Generate ("team/memberships/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
-					yield return www.Send ();
-					if (www.isError) {
-						// Network Error
-						Debug.LogError ("Failed to Delete Team Membership: " + www.error);
-					} else {
-						// Delete returns 204 on success
-						if (www.responseCode == 204) {
-							result (true);
-						} else {
-							// Delete Failed
-							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-							error (new SparkMessage (json));
-						}
-					}
-				}
-			}
-		}
+        /// <summary>
+        /// Lists all TeamMemberships matching the given criteria.
+        /// </summary>
+        /// <param name="error">Error from Spark, if any.</param>
+        /// <param name="results">List of TeamMemberships.</param>
+        /// <param name="team">The Team to show TeamMemberships for.</param>
+        /// <param name="person">The Person to show TeamMemberships for.</param>
+        /// <param name="max">The maximum number of TeamMemberships to return.</param>
+        /// <returns></returns>
+		public static IEnumerator ListTeamMemberships(Action<SparkMessage> error, Action<List<TeamMembership>> results, Team team = null, Person person = null, int max = 0)
+        {
+            var constraints = new Dictionary<string, string>();
+            if (team != null)
+            {
+                constraints.Add("teamId", team.Id);
+            }
+            else if (person != null)
+            {
+                constraints.Add("personId", person.Id);
+            }
 
-		/// <summary>
-		/// Lists the memberships.
-		/// </summary>
-		/// <returns>The memberships.</returns>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		/// <param name="teamId">Team identifier.</param>
-		/// <param name="personId">Person identifier.</param>
-		/// <param name="personEmail">Person email.</param>
-		/// <param name="max">Max.</param>
-		public static IEnumerator ListTeamMemberships(Action<SparkMessage> error, Action<List<TeamMembership>> result, string teamId = null, string personId = null, string personEmail = null, int max = 0) {
-			var manager = Request.Instance;
+            if (max > 0)
+            {
+                constraints.Add("max", max.ToString());
+            }
 
-			// Optional Parameters
-			var data = new Dictionary<string, string> ();
-			if (teamId != null) {
-				data ["teamId"] = teamId;
-			} 
-			if (personId != null) {
-				data ["personId"] = personId;
-			}
-			if (personEmail != null) {
-				data ["personEmail"] = personEmail;
-			}
-			if (max != 0) {
-				data ["max"] = max.ToString ();
-			}
-
-			// Optional Parameters to URL query
-			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
-
-			// Make Request
-			using (UnityWebRequest www = manager.Generate ("team/memberships?" + queryString, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-
-				if (www.isError) {
-					// Network error
-					Debug.LogError("Failed to List Team Memberships: " + www.error);
-				} else {
-					// Request succeeded, parse response
-					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-
-					// Check for Spark side errors
-					if (json.ContainsKey ("message")) {
-						error (new SparkMessage (json));
-					} else {
-						// Convert to TeamMembership objects
-						var teamMemberships = new List<TeamMembership> ();
-						var items = json ["items"] as List<object>;
-						foreach (var teamMembership in items) {
-							teamMemberships.Add (new TeamMembership (teamMembership as Dictionary<string, object>));
-						}
-						result (teamMemberships);
-					}
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets the membership details.
-		/// </summary>
-		/// <returns>The membership details.</returns>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		/// <param name="teamMembershipId">Membership identifier.</param>
-		public static IEnumerator GetTeamMembershipDetails(string teamMembershipId, Action<SparkMessage> error, Action<TeamMembership> result) {
-			Request manager = Request.Instance;
-			using (UnityWebRequest www = manager.Generate ("team/memberships/" + teamMembershipId, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-
-				if (www.isError) {
-					// Network error
-					Debug.LogError (www.error);
-				} else {
-					// Parse Response
-					var teamMembershipData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (teamMembershipData.ContainsKey ("message")) {
-						// Error Callback
-						error (new SparkMessage (teamMembershipData));
-					} else {
-						// Result callback
-						result(new TeamMembership (teamMembershipData));
-					}
-				}
-			}
-		}
-	}
+            var listObjects = ListObjects<TeamMembership>(constraints, SparkType.TeamMembership, error, results);
+            yield return Request.Instance.StartCoroutine(listObjects);
+        }
+    }
 }

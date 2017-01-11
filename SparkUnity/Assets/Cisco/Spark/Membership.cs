@@ -1,223 +1,128 @@
-﻿using UnityEngine;
-using UnityEngine.Networking;
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using MiniJSON;
+using System.Collections;
 
-namespace Cisco.Spark {
-	public class Membership {
-		public string Id { get; private set;}
-		public string RoomId { get; set;}
-		public string PersonId { get; set;}
-		public string PersonDisplayName { get; set;}
-		public string PersonEmail { get; set;}
-		public bool IsModerator { get; set;}
-		public bool IsMonitor { get; set;}
-		public DateTime Created { get; private set;}
+namespace Cisco.Spark
+{
+    /// <summary>
+    /// Membership represents a <see cref="Person"/>'s relationship to a <see cref="Room"/>.
+    /// </summary>
+    public class Membership : SparkObject
+    {
+        /// <summary>
+        /// The Room the Membership belongs to.
+        /// </summary>
+        public Room Room { get; set; }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Membership"/> class.
-		/// </summary>
-		public Membership() { }
+        /// <summary>
+        /// The Person the Membership belongs to.
+        /// </summary>
+        public Person Person { get; set; }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Membership"/> class.
-		/// </summary>
-		/// <param name="roomId">Room identifier.</param>
-		/// <param name="personId">Person identifier.</param>
-		/// <param name="personEmail">Person email.</param>
-		/// <param name="isModerator">If set to <c>true</c> is moderator.</param>
-		public Membership(string roomId, string personId, string personEmail, bool isModerator) {
-			RoomId = roomId;
-			PersonId = personId;
-			PersonEmail = personEmail;
-			IsModerator = isModerator;
-		}
+        /// <summary>
+        /// True if the Person is a moderator of the Room.
+        /// </summary>
+        public bool IsModerator { get; set; }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Cisco.Spark.Membership"/> class.
-		/// </summary>
-		/// <param name="membershipData">Membership data.</param>
-		Membership(Dictionary<string, object> membershipData) {
-			try {
-				Id = membershipData ["id"] as string;
-				RoomId = membershipData ["roomId"] as string;
-				PersonId = membershipData ["personId"] as string;
-				PersonEmail = membershipData ["personEmail"] as string;
-				PersonDisplayName = membershipData ["personDisplayName"] as string;
-				IsModerator = (bool) membershipData ["isModerator"];
-				IsMonitor = (bool) membershipData ["isMonitor"];
-				Created = DateTime.Parse ((string) membershipData ["created"]);
-			} catch (KeyNotFoundException) {
-				Debug.Log ("Couldn't parse Membership");
-			}
-		}
+        /// <summary>
+        /// True if the Person is a monitor of the Room.
+        /// </summary>
+        public bool IsMonitor { get; set; }
 
-		/// <summary>
-		/// Commit the specified error and result.
-		/// </summary>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		public IEnumerator Commit(Action<SparkMessage> error, Action<Membership> result) {
-			// Setup request from current state of Room object
-			var manager = Request.Instance;
+        /// <summary>
+        /// The SparkType this SparkObject implementation represents.
+        /// </summary>
+        /// <returns></returns>
+        internal override SparkType SparkType
+        {
+            get
+            {
+                return SparkType.Membership;
+            }
+        }
 
-			// Membership Data
-			var data = new Dictionary<string, string> ();
+        /// <summary>
+        /// Create a Membership from an existing Spark membership Id.
+        /// </summary>
+        /// <param name="id">Spark UID of a Membership.</param>
+        public Membership(string id)
+        {
+            Id = id;
+        }
 
-			// Create or Update?
-			string resource;
-			string httpVerb;
-			if (Id == null) {
-				// Creating a new Membership
-				data ["roomId"] = RoomId;
-				data ["personId"] = PersonId;
-				data ["personEmail"] = PersonEmail;
-				data ["isModerator"] = IsModerator.ToString ();
-				resource = "memberships";
-				httpVerb = UnityWebRequest.kHttpVerbPOST;
-			} else {
-				// Updating an existing Membership
-				// Only changing <see cref="Cisco.Spark.Membership.IsModerator"/> is currently supported. 
-				data ["isModerator"] = IsModerator.ToString ();
-				resource = "memberships/" + Id;
-				httpVerb = UnityWebRequest.kHttpVerbPUT;
-			}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Cisco.Spark.Membership"/> class.
+        /// </summary>
+        /// <param name="room">The Room of the membership.</param>
+        /// <param name="person">The person belonging to the membership.</param>
+        /// <param name="isModerator">True if this member is a moderator.</param>
+        /// /// <param name="isMonitor">True if this member is a monitor.</param>
+        public Membership(Room room, Person person, bool isModerator = false, bool isMonitor = false)
+        {
+            Room = room;
+            Person = person;
+            IsModerator = isModerator;
+            IsMonitor = isMonitor;
+        }
 
-			// Make request
-			using (UnityWebRequest www = manager.Generate(resource, httpVerb)) {
-				byte[] raw_data = System.Text.Encoding.UTF8.GetBytes (Json.Serialize (data));
-				www.uploadHandler = new UploadHandlerRaw (raw_data);
-				yield return www.Send ();
-				if (www.isError) {
-					Debug.LogError("Failed to Create Membership: " + www.error);
-				} else {
-					// Parse Response
-					var membershipData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (membershipData.ContainsKey ("message")) {
-						// Spark Error
-						error (new SparkMessage (membershipData));
-					} else {
-						// Create local Membership object
-						result(new Membership (membershipData));
-					}
-				}
-			}
-		}
+        /// <summary>
+        /// Returns a dictionary representation of the object.
+        /// </summary>
+        /// <returns>The Dictionary.</returns>
+        /// <param name="fields">A specific list of fields to serialise.</param>
+        protected override Dictionary<string, object> ToDict(List<string> fields = null)
+        {
+            // Serialise to dictionary.
+            var data = base.ToDict();
+            data["roomId"] = Room.Id;
+            data["personId"] = Person.Id;
+            data["isModerator"] = IsModerator;
+            return CleanDict(data, fields);
+        }
 
-		/// <summary>
-		/// Delete the specified error and result.
-		/// </summary>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		public IEnumerator Delete(Action<SparkMessage> error, Action<bool> result) {
-			if (Id != null) {
-				var manager = Request.Instance;
-				using (UnityWebRequest www = manager.Generate ("memberships/" + Id, UnityWebRequest.kHttpVerbDELETE)) {
-					yield return www.Send ();
-					if (www.isError) {
-						// Network Error
-						Debug.LogError ("Failed to Delete Membership: " + www.error);
-					} else {
-						// Delete returns 204 on success
-						if (www.responseCode == 204) {
-							result (true);
-						} else {
-							// Delete Failed
-							var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-							error (new SparkMessage (json));
-						}
-					}
-				}
-			}
-		}
-			
-		/// <summary>
-		/// Lists the memberships.
-		/// </summary>
-		/// <returns>The memberships.</returns>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		/// <param name="roomId">Room identifier.</param>
-		/// <param name="personId">Person identifier.</param>
-		/// <param name="personEmail">Person email.</param>
-		/// <param name="max">Max.</param>
-		public static IEnumerator ListMemberships(Action<SparkMessage> error, Action<List<Membership>> result, string roomId = null, string personId = null, string personEmail = null, int max = 0) {
-			var manager = Request.Instance;
+        /// <summary>
+        /// Populates the Membership with data from Spark.
+        /// </summary>
+        /// <param name="data">Dictionary of Membership data.</param>
+		protected override void LoadDict(Dictionary<string, object> data)
+        {
+            base.LoadDict(data);
+            var roomId = data["roomId"] as string;
+            Room = new Room(roomId);
+            var personId = data["personId"] as string;
+            Person = new Person(personId);
+            IsModerator = (bool)data["isModerator"];
+            IsMonitor = (bool)data["isMonitor"];
+        }
 
-			// Optional Parameters
-			var data = new Dictionary<string, string> ();
-			if (roomId != null) {
-				data ["roomId"] = roomId;
-			} 
-			if (personId != null) {
-				data ["personId"] = personId;
-			}
-			if (personEmail != null) {
-				data ["personEmail"] = personEmail;
-			}
-			if (max != 0) {
-				data ["max"] = max.ToString ();
-			}
+        /// <summary>
+        /// Lists all Memberships matching the given criteria.
+        /// </summary>
+        /// <param name="error">Error from Spark, if any.</param>
+        /// <param name="results">List of Memberships.</param>
+        /// <param name="room">The Room to show Memberships for.</param>
+        /// <param name="person">The person to show Memberships for.</param>
+        /// <param name="max">The maximum number of Memberships to return.</param>
+        /// <returns></returns>
+        public static IEnumerator ListMemberships(Action<SparkMessage> error, Action<List<Membership>> results, Room room = null, Person person = null, int max = 0)
+        {
+            var constraints = new Dictionary<string, string>();
+            if (room != null)
+            {
+                constraints.Add("roomId", room.Id);
+            }
+            else if (person != null)
+            {
+                constraints.Add("personId", person.Id);
+            }
 
-			// Optional Parameters to URL query
-			string queryString = System.Text.Encoding.UTF8.GetString (UnityWebRequest.SerializeSimpleForm (data));
+            if (max > 0)
+            {
+                constraints.Add("max", max.ToString());
+            }
 
-			// Make Request
-			using (UnityWebRequest www = manager.Generate ("memberships?" + queryString, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-
-				if (www.isError) {
-					// Network error
-					Debug.LogError("Failed to List Memberships: " + www.error);
-				} else {
-					// Request succeeded, parse response
-					var json = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-
-					// Check for Spark side errors
-					if (json.ContainsKey ("message")) {
-						error (new SparkMessage (json));
-					} else {
-						// Convert to Membership objects
-						var memberships = new List<Membership> ();
-						var items = json ["items"] as List<object>;
-						foreach (var membership in items) {
-							memberships.Add (new Membership (membership as Dictionary<string, object>));
-						}
-						result (memberships);
-					}
-				}
-			}
-		}
-			
-		/// <summary>
-		/// Gets the membership details.
-		/// </summary>
-		/// <returns>The membership details.</returns>
-		/// <param name="error">Error.</param>
-		/// <param name="result">Result.</param>
-		/// <param name="membershipId">Membership identifier.</param>
-		public static IEnumerator GetMembershipDetails(string membershipId, Action<SparkMessage> error, Action<Membership> result) {
-			var manager = Request.Instance;
-			using (UnityWebRequest www = manager.Generate ("memberships/" + membershipId, UnityWebRequest.kHttpVerbGET)) {
-				yield return www.Send ();
-
-				if (www.isError) {
-					// Network error
-					Debug.LogError (www.error);
-				} else {
-					// Parse Response
-					var membershipData = Json.Deserialize (www.downloadHandler.text) as Dictionary<string, object>;
-					if (membershipData.ContainsKey ("message")) {
-						// Error Callback
-						error (new SparkMessage (membershipData));
-					} else {
-						// Result callback
-						result(new Membership (membershipData));
-					}
-				}
-			}
-		}
-	}
+            var listObjects = ListObjects<Membership>(constraints, SparkType.Membership, error, results);
+            yield return Request.Instance.StartCoroutine(listObjects);
+        }
+    }
 }

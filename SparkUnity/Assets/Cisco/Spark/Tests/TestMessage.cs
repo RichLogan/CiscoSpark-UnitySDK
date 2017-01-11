@@ -1,83 +1,100 @@
-﻿using UnityEngine;
+using UnityEngine;
 using Cisco.Spark;
 
-/// <summary>
-/// Class to test the <see cref="Cisco.Spark.Message"/> functionality.
-/// </summary>
-public class TestMessage : MonoBehaviour {
+public class TestMessage : MonoBehaviour
+{
 
-	// Run all tests
-	void Start () {
-		int errorCount = 0;
-		Debug.Log ("Running Message tests");
+    string testMessageContent = "Testing Create Message";
+    Room testRoom = null;
 
-		// Create a room for tests
-		var testRoom = new Room ("Test Room (CiscoSpark-UnitySDK", null);
-		StartCoroutine (testRoom.Commit (error => {
-			// Failed to create test room
-			errorCount++;
-			Debug.LogError("Couldn't create target Room");
-		}, room => {
-			// Test Room successful
-			testRoom = room;
-			if (testRoom.Id == null) {
-				errorCount++;
-				Debug.LogError ("Could not create target Room");
-			}
+    void Start()
+    {
+        CreateMessage();
+    }
 
-			// Create a new Message
-			var newMessage = new Message ();
-			newMessage.RoomId = testRoom.Id;
-			newMessage.Text = "Test message";
+    void CreateMessage()
+    {
+        // Create Temporary Test Room.
+        testRoom = new Room("Cisco Spark Unity Test Room", null);
+        var roomCommit = testRoom.Commit(error =>
+        {
+            Debug.LogError("Couldn't create test room: " + error.Message);
+        }, testRoomCreated =>
+        {
+            var testMessage = new Message(testRoom);
+            testMessage.Text = testMessageContent;
+            var messageCommit = testMessage.Commit(messageError =>
+            {
+                Debug.LogError("Create Message Failed: " + messageError.Message);
+            }, createMessageSuccess =>
+            {
+                GetMessage(testMessage.Id);
+            });
+            StartCoroutine(messageCommit);
+        });
+        StartCoroutine(roomCommit);
+    }
 
-			// Commit Message
-			StartCoroutine (newMessage.Commit (error => {
-				errorCount++;
-				Debug.LogError("Couldn't commit Message: " + error.Message);
-			}, message => {
-				newMessage = message;
+    void GetMessage(string id)
+    {
+        var existingMessage = new Message(id);
+        var loadMessage = existingMessage.Load(error =>
+        {
+            Debug.LogError("Failed to load existing message: " + error.Message);
+        }, success =>
+        {
+            if (existingMessage.Text == testMessageContent)
+            {
+                // Create is known to have passed here.
+                Debug.Log("Create Message Passed!");
+                // Get is known to have passed here.
+                Debug.Log("Get Message Passed!");
+                DeleteMessage(id);
+            }
+        });
+        StartCoroutine(loadMessage);
+    }
 
-				// List Messages From Room
-				StartCoroutine (Message.ListMessages (testRoom.Id, error => {
-					errorCount++;
-					Debug.LogError("Couldn't list Messages: " + error.Message);
-				}, messages => {
-					// Check Message was successful
-					if (messages [messages.Count - 1].Text != "Test message") {
-						Debug.LogError ("Create Message Failed!");
-						errorCount++;
-					} else {
-						Debug.Log ("Create Message Passed!");
-					}
+    void DeleteMessage(string id)
+    {
+        var message = new Message(id);
+        var deleteMessage = message.Delete(error =>
+        {
+            Debug.LogError("Failed to delete message: " + error.Message);
+        }, success =>
+        {
+            // Check it's been deleted.
+            var checkDelete = new Message(message.Id);
+            var getDeleted = checkDelete.Load(error =>
+            {
+                // This should fail.
+                if (error.Message == "message not found")
+                {
+                    Debug.Log("Delete Message Passed!");
+                    CleanUpRoom();
+                }
+                else
+                {
+                    Debug.LogError("Delete Message Failed: " + error.Message);
+                }
+            }, getDeleteSuccess =>
+            {
+                // This shouldn't succeed.
+                Debug.LogError("Delete Message Failed");
+            });
+            StartCoroutine(getDeleted);
+        });
+        StartCoroutine(deleteMessage);
+    }
 
-					// Delete the message
-					StartCoroutine (newMessage.Delete (error => {
-						errorCount++;
-						Debug.LogError("Couldn't delete message: " + error.Message);
-					}, result => StartCoroutine (Message.GetMessageDetails (newMessage.Id, error => {
-						// This should error as the message has been deleted
-						Debug.Log ("Successfully failed to get deleted message details");
-						// Clean up test Room
-						StartCoroutine (testRoom.Delete (deleteError => {
-							errorCount++;
-							Debug.LogError ("Couldn't delete Test Room: " + deleteError.Message);
-						}, delete => {
-							// Finish and Report
-							Debug.Log ("Finished Running Message Tests");
-							if (errorCount == 0) {
-								Debug.Log ("All tests passed!");
-							} else {
-								Debug.LogError (errorCount + " tests failed!");
-							}
-						}));
-					}, success => {
-						if (success != null) {
-							errorCount++;
-							Debug.Log ("Shouldn't be able to get details for deleted message");
-						}
-					}))));
-				})); 
-			}));
-		}));
-	}
+    void CleanUpRoom()
+    {
+        StartCoroutine(testRoom.Delete(error =>
+        {
+            Debug.LogError("Failed to delete test room: " + error.Message);
+        }, success =>
+        {
+            Debug.Log("Cleaned up test Room");
+        }));
+    }
 }
