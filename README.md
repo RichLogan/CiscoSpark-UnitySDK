@@ -18,11 +18,11 @@ This library takes advantage of the new `UnityEngine.Networking.UnityWebRequest`
 This SDK will always aim for parity with the web APIs at http://developer.ciscospark.com. 
 
 It provides:
-    - CRUD operations for all SparkObjects.
-    - `Commit()` for creating or updating a record.
-    - `Delete()` for deletion.
-    - `Load()` for retrieve a record.
-    - `ListObject()` for querying records.
+
+- `Commit()` for creating or updating a record.
+- `Delete()` for deletion.
+- `Load()` for retrieve a record.
+- `ListObject()` for querying records.
 
 ## Setup
 1. Import the scripts or UnityPackage.
@@ -35,11 +35,15 @@ It provides:
 The basic syntax/flow to run any of the requests is:
 
 ```c#
+# Object is generated from ID or as a new object
 var sparkObject = new Room/Membership/etc()
+# Some operation is sent to Spark.
 StartCoroutine(sparkObject.someFunction(requiredParams, error => {
     // This will run on an error.
+    Debug.LogError("The operation failed: " + error.Message);
 }, success => {
     // This will run on success.
+    Debug.Log("The operation was a success!);
 }, optionalParams));
 ```
 
