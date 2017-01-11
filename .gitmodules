@@ -2,3 +2,7 @@
 	branch = master
 	path = SparkUnity/Assets/Cisco/Spark/Plugins/ObjLoader
 	url = git@github.com:RichLogan/ObjLoader.git
+[submodule "Documentation"]
+	path = docs/html
+	url = git@github.com:RichLogan/CiscoSpark-UnitySDK.git
+	branch = gh-pages
