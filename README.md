@@ -5,43 +5,49 @@ You can follow the progress + development of this here: https://trello.com/b/Bvp
 
 Basic `TODO` list:
 - Better Testing
-- Full Documentation
+- Cleanup
+- Additional objects (Orgs, Licenses etc.)
 
 ## Docs
 
-Working on it!
-
-For the moment I'm uploaded the latest generated stuff here if you really want to look: [Documentation](https://cisco.box.com/s/e30uljet1rv80nwy8nk6g57p4tl2fmty)
+Documentation can be found here: http://richlogan.co.uk/CiscoSpark-UnitySDK/ or [jump right into the code](http://richlogan.co.uk/CiscoSpark-UnitySDK/annotated.html).
 
 ## About
-This library takes advantage of the new `UnityEngine.Networking.UnityWebRequest` functionality introduced in Unity 5.4, as well as running all methods via Coroutines and returning results and errors using `System.Action`, in order to be non-blocking. I took inspiration from the NodeJS callback style using error, response.
+This library takes advantage of the new `UnityEngine.Networking.UnityWebRequest` functionality introduced in Unity 5.4. It talks to Spark through these web requests that run as coroutines to avoid blocking the main thread. Results are returned via `Action` callbacks.
 
-The SDK gives the following for each object:
+This SDK will always aim for parity with the web APIs at http://developer.ciscospark.com. 
 
-- CRUD operations for all SparkObjects.
-    - Committing a `Id=null` local object will create it on Spark.
-    - If an ID is set it will update the record on Spark.
-- Ability to List all objects from Spark matching a given query.
-- Ability to retrieve a specific instance from Spark.
-- A `SparkMessage` will be returned via the `error` callback if Spark cannot complete a request.
-
-The basic syntax to run any of the requests is:
-
-```c#
-StartCoroutine(sparkObject.function(requiredParams, error => {
-    // This will run on an error.
-}, success => {
-    // This will run on success.
-}, optionalParams));
-```
-
-Please see the Spark Developer documentation at http://developer.ciscospark.com for details about specific requests. This SDK will always aim for parity with the APIs documented there.
+It provides:
+    - CRUD operations for all SparkObjects.
+        - `Commit()` for creating or updating a record.
+        - `Delete()` for deletion.
+        - `Load()` for retrieve a record.
+        - `ListObject()` for querying records.
 
 ## Setup
 1. Import the scripts or UnityPackage.
 2. Place the `Cisco Spark Manager` prefab into your scene.
 3. Set the `AuthenticationString` variable in the Inspector.
     - Your `AuthenticationToken` or your bot's token can be found at http://developer.ciscospark.com
+
+## Quickstart
+
+The basic syntax/flow to run any of the requests is:
+
+```c#
+var sparkObject = new Room/Membership/etc()
+StartCoroutine(sparkObject.someFunction(requiredParams, error => {
+    // This will run on an error.
+}, success => {
+    // This will run on success.
+}, optionalParams));
+```
+
+- Any parameters required by Spark will come first.
+- The `error` callback will return a `SparkMessage` if a request cannot be completed.
+- The `success` callback will return `true` if an operation has succeded.
+- For `ListObjects` success would be a list of the returned objects.
+- Finally, any optional parameters would be given.
 
 ## Examples
 Here is an example of sending a `Message` to a given `Room` from Unity (without knowing the `RoomId` beforehand).
@@ -92,8 +98,6 @@ public class Spark : MonoBehaviour {
     }
 }
 ```
-
-Until proper documentation is generated you can have a look at the different operations as shown in the Tests.
 
 ## Tests
 Unfortunately, there is a lack of support for running Asynchronous operations in the Unity Test Tools, and I still need to write proper unit tests for the non-async parts of the SDK.
