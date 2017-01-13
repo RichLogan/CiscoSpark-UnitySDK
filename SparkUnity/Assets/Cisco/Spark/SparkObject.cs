@@ -106,12 +106,6 @@ namespace Cisco.Spark
         /// <param name="data">Deserialised data dictionary from Spark.</param>
         protected virtual void LoadDict(Dictionary<string, object> data)
         {
-            if (data.ContainsKey("message"))
-            {
-                var message = new SparkMessage(data);
-                throw new Exception(message.Message);
-            }
-
             Id = data["id"] as string;
             Created = DateTime.Parse(data["created"] as string);
         }

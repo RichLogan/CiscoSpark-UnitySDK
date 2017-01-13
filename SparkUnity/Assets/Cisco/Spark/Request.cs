@@ -39,13 +39,18 @@ namespace Cisco.Spark
         /// </summary>
         void Awake()
         {
+            if (AuthenticationToken == null || AuthenticationToken == "")
+            {
+                throw new Exception("AuthenticationToken MUST be set for Request setup");
+            }
+
             // Assign singleton.
             Instance = this;
 
             // Reference to Authenticated User.
             StartCoroutine(Person.GetMyself(error =>
             {
-                Debug.LogError("Couldn't set the Authenticated User");
+                throw new Exception("Couldn't set the Authenticated User");
             }, success =>
             {
                 SetupComplete = true;
@@ -88,29 +93,8 @@ namespace Cisco.Spark
         public IEnumerator GetRecord(string id, SparkType type, Action<SparkMessage> error, Action<Dictionary<string, object>> result)
         {
             var url = string.Format("{0}/{1}", type.GetEndpoint(), id);
-            using (var www = Generate(url, UnityWebRequest.kHttpVerbGET))
-            {
-                yield return www.Send();
-
-                if (www.isError)
-                {
-                    Debug.LogError("Couldn't connect to Spark: " + www.error);
-                }
-                else
-                {
-                    var returnedData = Json.Deserialize(www.downloadHandler.text) as Dictionary<string, object>;
-                    if (returnedData.ContainsKey("message"))
-                    {
-                        // Spark side error.
-                        error(new SparkMessage(returnedData));
-                    }
-                    else
-                    {
-                        // Returned data.
-                        result(returnedData);
-                    }
-                }
-            }
+            var send = SendRequest(url, UnityWebRequest.kHttpVerbGET, null, error, result);
+            yield return StartCoroutine(send);
         }
 
         /// <summary>
@@ -125,30 +109,9 @@ namespace Cisco.Spark
         {
             // Create request.
             var recordDetails = System.Text.Encoding.UTF8.GetBytes(Json.Serialize(data));
-            using (var www = Generate(type.GetEndpoint(), UnityWebRequest.kHttpVerbPOST, recordDetails))
-            {
-                yield return www.Send();
-
-                if (www.isError)
-                {
-                    // Network error.
-                    Debug.LogError("Couldn't connect to Spark: " + www.error);
-                }
-                else
-                {
-                    var returnedData = Json.Deserialize(www.downloadHandler.text) as Dictionary<string, object>;
-                    if (returnedData.ContainsKey("message"))
-                    {
-                        // Spark side error.
-                        error(new SparkMessage(returnedData));
-                    }
-                    else
-                    {
-                        // Returned data.
-                        result(returnedData);
-                    }
-                }
-            }
+            var url = type.GetEndpoint();
+            var send = SendRequest(url, UnityWebRequest.kHttpVerbPOST, recordDetails, error, result);
+            yield return StartCoroutine(send);
         }
 
         /// <summary>
@@ -164,30 +127,9 @@ namespace Cisco.Spark
         {
             // Update Record.
             var recordDetails = System.Text.Encoding.UTF8.GetBytes(Json.Serialize(data));
-            using (var www = Generate(type.GetEndpoint() + "/" + id, UnityWebRequest.kHttpVerbPUT, recordDetails))
-            {
-                yield return www.Send();
-
-                if (www.isError)
-                {
-                    // Network error.
-                    Debug.LogError("Couldn't connect to Spark: " + www.error);
-                }
-                else
-                {
-                    var returnedData = Json.Deserialize(www.downloadHandler.text) as Dictionary<string, object>;
-                    if (returnedData.ContainsKey("message"))
-                    {
-                        // Spark side error.
-                        error(new SparkMessage(returnedData));
-                    }
-                    else
-                    {
-                        // Returned data.
-                        result(returnedData);
-                    }
-                }
-            }
+            var url = type.GetEndpoint() + "/" + id;
+            var send = SendRequest(url, UnityWebRequest.kHttpVerbPUT, recordDetails, error, result);
+            yield return StartCoroutine(send);
         }
 
         /// <summary>
@@ -201,31 +143,12 @@ namespace Cisco.Spark
         public IEnumerator DeleteRecord(string id, SparkType type, Action<SparkMessage> error, Action<bool> success)
         {
             // Create Request.
-            using (var www = Generate(type.GetEndpoint() + "/" + id, UnityWebRequest.kHttpVerbDELETE))
+            var url = type.GetEndpoint() + "/" + id;
+            var send = SendRequest(url, UnityWebRequest.kHttpVerbDELETE, null, error, result =>
             {
-                // Make request.
-                yield return www.Send();
-
-                // Check result.
-                if (www.isError)
-                {
-                    // Network Error.
-                    Debug.LogError("Couldn't connect to Spark: " + www.error);
-                }
-                else
-                {
-                    // Deletion gives 204 on success;
-                    if (www.responseCode == 204)
-                    {
-                        success(true);
-                    }
-                    else
-                    {
-                        var data = Json.Deserialize(www.downloadHandler.text) as Dictionary<string, object>;
-                        error(new SparkMessage(data));
-                    }
-                }
-            }
+                success(true);
+            });
+            yield return StartCoroutine(send);
         }
 
         /// <summary>
@@ -239,27 +162,63 @@ namespace Cisco.Spark
         {
             string queryString = System.Text.Encoding.UTF8.GetString(UnityWebRequest.SerializeSimpleForm(constraints));
             string url = string.Format("{0}?{1}", type.GetEndpoint(), queryString);
-            using (var www = Generate(url, UnityWebRequest.kHttpVerbGET))
+            var operation = SendRequest(url, UnityWebRequest.kHttpVerbGET, null, error, data =>
+            {
+                var items = data["items"] as List<object>;
+                result(items);
+            });
+            yield return StartCoroutine(operation);
+        }
+
+        /// <summary>
+        /// Makes a request so Spark and parses the response.
+        /// </summary>
+        /// <param name="url">URL to send request.</param>
+        /// <param name="requestType">Request Type.</param>
+        /// <param name="data">Data to upload, if any.</param>
+        /// <param name="error">SparkMessage to return.</param>
+        /// <param name="result">Result dictionary to return.</param>
+        IEnumerator SendRequest(string url, string requestType, byte[] data, Action<SparkMessage> error, Action<Dictionary<string, object>> result)
+        {
+            using (var www = Generate(url, requestType, data))
             {
                 yield return www.Send();
 
                 if (www.isError)
                 {
-                    Debug.LogError("Couldn't connect to Spark: " + www.error);
+                    // Unity couldn't make the Web Request.
+                    throw new Exception(www.error);
                 }
                 else
                 {
-                    var returnedData = Json.Deserialize(www.downloadHandler.text) as Dictionary<string, object>;
-                    if (returnedData.ContainsKey("message"))
+                    // Handle an empty response.
+                    try
                     {
-                        // Spark side error.
-                        error(new SparkMessage(returnedData));
+                        var returnedData = Json.Deserialize(www.downloadHandler.text) as Dictionary<string, object>;
+                        if (www.responseCode == 200)
+                        {
+                            result(returnedData);
+                        }
+                        else
+                        {
+                            error(new SparkMessage(returnedData, www));
+                        }
                     }
-                    else
+                    catch (OverflowException)
                     {
-                        // Returned data.
-                        var items = returnedData["items"] as List<object>;
-                        result(items);
+                        // Response Body was empty.
+                        if (www.responseCode == 204)
+                        {
+                            // This is actually a deletion success (it returns no body).
+                            result(null);
+                        }
+                        else
+                        {
+                            // TODO: Find out if this can actually happen.
+                            // Unknown error occured.
+                            Debug.LogError("Create an issue!: www.error");
+                            error(new SparkMessage(www));
+                        }
                     }
                 }
             }

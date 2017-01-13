@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine.Networking;
 
 namespace Cisco.Spark
 {
@@ -24,11 +25,17 @@ namespace Cisco.Spark
         public string TrackingId { get; private set; }
 
         /// <summary>
+        /// The associated web request.
+        /// </summary>
+        public UnityWebRequest WebRequest {get; private set; }
+
+        /// <summary>
         /// Creates a SparkMessage from a JSON Spark response.
         /// </summary>
         /// <param name="data">Dictionary of data about the SparkMessage.</param>
-        public SparkMessage(Dictionary<string, object> data)
+        public SparkMessage(Dictionary<string, object> data, UnityWebRequest request)
         {
+            WebRequest = request;
             Message = (string)data["message"];
             Errors = new List<SparkError>();
 
@@ -44,6 +51,14 @@ namespace Cisco.Spark
                 Errors = errorList;
             }
             TrackingId = (string)data["trackingId"];
+        }
+
+        /// <summary>
+        /// Creates a SparkMessage object from a UnityWebRequest.
+        /// </summary>
+        /// <param name="statusCode">UnityWebRequest.</param>
+        public SparkMessage(UnityWebRequest request) {
+            WebRequest = request;
         }
     }
 }
