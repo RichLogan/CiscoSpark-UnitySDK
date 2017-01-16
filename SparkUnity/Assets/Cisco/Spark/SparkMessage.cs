@@ -33,6 +33,7 @@ namespace Cisco.Spark
         /// Creates a SparkMessage from a JSON Spark response.
         /// </summary>
         /// <param name="data">Dictionary of data about the SparkMessage.</param>
+        /// <param name="request">The associated UnityWebRequest.</param>
         public SparkMessage(Dictionary<string, object> data, UnityWebRequest request)
         {
             WebRequest = request;
@@ -56,7 +57,7 @@ namespace Cisco.Spark
         /// <summary>
         /// Creates a SparkMessage object from a UnityWebRequest.
         /// </summary>
-        /// <param name="statusCode">UnityWebRequest.</param>
+        /// <param name="request">The associated UnityWebRequest.</param>
         public SparkMessage(UnityWebRequest request) {
             WebRequest = request;
         }
