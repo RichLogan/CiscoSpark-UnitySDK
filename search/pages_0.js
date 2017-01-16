@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['ciscospark_2dunitysdk',['CiscoSpark-UnitySDK',['../index.html',1,'']]]
+  ['cisco_20spark_20sdk_20for_20unity',['Cisco Spark SDK for Unity',['../index.html',1,'']]]
 ];
