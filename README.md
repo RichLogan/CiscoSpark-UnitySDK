@@ -1,4 +1,4 @@
-# CiscoSpark-UnitySDK
+# Cisco Spark SDK for Unity
 Native Cisco Spark SDK for Unity 5.4+
 
 You can follow the progress + development of this here: https://trello.com/b/BvpwAZYd/unity-spark-sdk
@@ -27,18 +27,19 @@ It provides:
 
 ## Setup
 1. Import the scripts or UnityPackage.
-2. Place the `Cisco Spark Manager` prefab into your scene.
-3. Set the `AuthenticationString` variable in the Inspector.
+2. Place the `Cisco Spark Manager` prefab from Cisco/Spark/Prefabs into your scene.
+3. Set the `AuthenticationString` variable of the `Request` component in the Inspector.
     - Your `AuthenticationToken` or your bot's token can be found at http://developer.ciscospark.com
+    - Support for integrations is coming
 
 ## Quickstart
 
 The basic syntax/flow to run any of the requests is:
 
 ```c#
-# Object is generated from ID or as a new object
+// Object is generated from ID or as a new object
 var sparkObject = new Room/Membership/etc()
-# Some operation is sent to Spark.
+// Some operation is sent to Spark.
 StartCoroutine(sparkObject.someFunction(requiredParams, error => {
     // This will run on an error.
     Debug.LogError("The operation failed: " + error.Message);
