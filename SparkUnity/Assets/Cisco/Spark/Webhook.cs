@@ -123,7 +123,7 @@ namespace Cisco.Spark
         /// </summary>
         /// <param name="error">Error from Spark, if any.</param>
         /// <param name="results">List of Webhooks.</param>
-        /// <param name="max">Maximum number of Webhooks to retrive.</param>
+        /// <param name="max">Maximum number of Webhooks to retrieve.</param>
         public static IEnumerator ListWebhooks(Action<SparkMessage> error, Action<List<Webhook>> results, int max = 0)
         {
             var constraints = new Dictionary<string, string>();

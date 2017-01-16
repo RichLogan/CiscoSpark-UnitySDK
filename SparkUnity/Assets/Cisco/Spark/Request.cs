@@ -83,7 +83,7 @@ namespace Cisco.Spark
         }
 
         /// <summary>
-        /// Retrives an existing record from the Spark service by ID.
+        /// Retrieves an existing record from the Spark service by ID.
         /// </summary>
         /// <returns>The record's data.</returns>
         /// <param name="id">Identifier.</param>
@@ -157,7 +157,7 @@ namespace Cisco.Spark
         /// <param name="constraints">Any constraints on the results returned. See ApiConstrains.json for SparkType specific options.</param>
         /// <param name="type">The SparkType to retrieve.</param>
         /// <param name="error">Error from Spark, if any.</param>
-        /// <param name="result">List of deserialised results as dictionaries.</param>
+        /// <param name="result">List of de-serialised results as dictionaries.</param>
         public IEnumerator ListRecords(Dictionary<string, string> constraints, SparkType type, Action<SparkMessage> error, Action<List<object>> result)
         {
             string queryString = System.Text.Encoding.UTF8.GetString(UnityWebRequest.SerializeSimpleForm(constraints));
@@ -215,7 +215,7 @@ namespace Cisco.Spark
                         else
                         {
                             // TODO: Find out if this can actually happen.
-                            // Unknown error occured.
+                            // Unknown error occurred.
                             Debug.LogError("Create an issue!: www.error");
                             error(new SparkMessage(www));
                         }

@@ -86,7 +86,7 @@ namespace Cisco.Spark
         // TODO: List Rooms and List Teams?
 
         /// <summary>
-        /// Populates an object with data recieved from Spark.
+        /// Populates an object with data received from Spark.
         /// </summary>
         /// <param name="data">Data.</param>
         protected override void LoadDict(Dictionary<string, object> data)

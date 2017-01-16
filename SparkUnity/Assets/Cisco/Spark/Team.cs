@@ -60,7 +60,7 @@ namespace Cisco.Spark
         /// <summary>
         /// Populates the object with data retrieved from Spark.
         /// </summary>
-        /// <param name="data">Deserialised data dictionary from Spark.</param>
+        /// <param name="data">De-serialised data dictionary from Spark.</param>
         protected override void LoadDict(Dictionary<string, object> data)
         {
             base.LoadDict(data);

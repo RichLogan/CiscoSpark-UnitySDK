@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace Cisco.Spark
 {
     /// <summary>
-    /// TeamMembership representats a <see cref="Person"/>'s relationship to a <see cref="Team"/>.
+    /// TeamMembership represents a <see cref="Person"/>'s relationship to a <see cref="Team"/>.
     /// </summary>
     public class TeamMembership : SparkObject
     {
