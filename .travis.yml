@@ -3,7 +3,5 @@ solution: SparkUnity/SparkUnity.sln
 install:
     - ./Travis/installUnity.sh
 script:
-    - ./Travis/createProject.sh
-    - ./Travis/installSDK.sh
+    - ./Travis/getSDK.sh
     - travis_wait 15 ./Travis/runTests.sh
-    - ./Travis/build.sh

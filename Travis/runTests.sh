@@ -7,7 +7,7 @@ rm -f testLog.log
 
 /Applications/Unity/Unity.app/Contents/MacOS/Unity \
     -batchmode \
-    -projectPath ~/Projects/CiscoSpark-UnitySDK/SparkUnity \
+    -projectPath $(pwd)/TravisBuild/Project/SparkUnity \
     -executeMethod UnityTest.Batch.RunIntegrationTests \
     -testscenes=SparkIntegrationTests \
     -targetPlatform=StandaloneOSXIntel \
