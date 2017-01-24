@@ -1,7 +1,5 @@
-language: objective-c
-osximage: xcode61
-rvm:
-    - 2.1.2
+language: csharp
+osximage: xcode8.2
 install:
     - ./Travis/installUnity.sh
 script:
