@@ -1,5 +1,4 @@
-language: csharp
-osximage: xcode8.2
+os: osx
 install:
     - ./Travis/installUnity.sh
 script:
