@@ -7,11 +7,15 @@ rm -f testLog.log
 
 /Applications/Unity/Unity.app/Contents/MacOS/Unity \
     -batchmode \
+    -nographics \
+    -silent-crashes \
+    -force-free \
     -projectPath $(pwd)/TravisBuild/Project/SparkUnity \
     -executeMethod UnityTest.Batch.RunIntegrationTests \
     -testscenes=SparkIntegrationTests \
     -targetPlatform=StandaloneOSXIntel \
-    -logFile $(pwd)/testLog.log
+    -logFile $(pwd)/testLog.log \
+    -quit
 
 cat testLog.log | grep "All tests passed"
 
