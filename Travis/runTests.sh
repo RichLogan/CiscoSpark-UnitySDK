@@ -18,6 +18,7 @@ cat testLog.log | grep "All tests passed"
 if [ $? = 0 ] ; then
     exit 0
 else
+    cat testLog.log
     echo "Tests Failed!"
     exit 1
 fi
