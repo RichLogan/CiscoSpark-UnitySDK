@@ -14,8 +14,7 @@ rm -f testLog.log
     -executeMethod UnityTest.Batch.RunIntegrationTests \
     -testscenes=SparkIntegrationTests \
     -targetPlatform=StandaloneOSXIntel \
-    -logFile $(pwd)/testLog.log \
-    -quit
+    -logFile $(pwd)/testLog.log
 
 cat testLog.log | grep "All tests passed"
 
