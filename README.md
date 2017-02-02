@@ -1,4 +1,4 @@
-# Cisco Spark SDK for Unity
+# Cisco Spark SDK for Unity [![Build Status](https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK.svg?branch=master)](https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK)
 Native Cisco Spark SDK for Unity 5.4+
 
 You can follow the progress + development of this here: https://trello.com/b/BvpwAZYd/unity-spark-sdk
@@ -29,8 +29,8 @@ It provides:
 1. Import the scripts or UnityPackage.
 2. Place the `Cisco Spark Manager` prefab from Cisco/Spark/Prefabs into your scene.
 3. Set the `AuthenticationString` variable of the `Request` component in the Inspector.
-    - Your `AuthenticationToken` or your bot's token can be found at http://developer.ciscospark.com
-    - Support for integrations is coming
+    - Your token (or your bot's token) can be found at http://developer.ciscospark.com
+    - Support for integrations/OAuth is coming!
 
 ## Quickstart
 
@@ -106,8 +106,6 @@ public class Spark : MonoBehaviour {
 ```
 
 ## Tests
-Unfortunately, there is a lack of support for running Asynchronous operations in the Unity Test Tools, and I still need to write proper unit tests for the non-async parts of the SDK.
-Instead, there are `MonoBehaviour` test scripts included that will run chains of requests. To run them, just attach any of the `Test*` scripts to a GameObject, and the results will be outputted to the console.
-Some of them require known and existing Person IDs to be added (as I can't generate Person objects without admin rights on a Spark instance.)
+Tests can be run by cloning from this repository (with `--recursive`) and opening the SparkIntegrationTests scene in Cisco/Spark/Tests. All tests can then be run using the Unity Integration Test Runner by selecting Integration Tests Runner from Unity Test Tools.
 
 **Note: This will create/edit/destroy real test rooms/memberships/etc on the given Spark account, but they will clean up after themselves if possible.**

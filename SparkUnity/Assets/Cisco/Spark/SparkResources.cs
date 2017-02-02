@@ -107,12 +107,8 @@ namespace Cisco.Spark
             Instance = this;
 
             // Load API Constraints from resource file.
-            string contents;
-            using (var streamReader = new StreamReader("Assets/Cisco/Spark/ApiConstraints.json"))
-            {
-                contents = streamReader.ReadToEnd();
-            }
-            ApiConstraints = Json.Deserialize(contents) as Dictionary<string, object>;
+            var contents = Resources.Load("ApiConstraints") as TextAsset;
+            ApiConstraints = Json.Deserialize(contents.text) as Dictionary<string, object>;
             ApiConstraints = ApiConstraints["apiConstraints"] as Dictionary<string, object>;
         }
     }
