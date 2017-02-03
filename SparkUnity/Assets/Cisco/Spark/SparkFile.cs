@@ -57,6 +57,7 @@ namespace Cisco.Spark
         public SparkFile(Uri url)
         {
             UploadUrl = url;
+            Id = UploadUrl.AbsoluteUri.Split(new string[] { "contents/" }, StringSplitOptions.None)[1];
         }
 
         /// <summary>
