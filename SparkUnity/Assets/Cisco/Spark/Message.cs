@@ -99,11 +99,22 @@ namespace Cisco.Spark
             {
                 data["toPersonId"] = Recipient.Id;
             }
+            else
+            {
+                throw new Exception("Message must have a destination");
+            }
 
             // Author.
             data["personId"] = Author.Id;
 
             // Message Content.
+
+            // Content check.
+            if ((Files == null || Files.Count == 0) && (Text == null || Text == ""))
+            {
+                throw new Exception("A message must have content (text and/or files)");
+            }
+
             data["text"] = Text;
             data["markdown"] = Markdown;
 
@@ -119,7 +130,8 @@ namespace Cisco.Spark
             }
 
             // Mentions.
-            if (Mentions != null && Mentions.Count > 0) {
+            if (Mentions != null && Mentions.Count > 0)
+            {
                 var personIds = new List<string>();
                 foreach (var person in Mentions)
                 {
@@ -148,8 +160,12 @@ namespace Cisco.Spark
             // Author.
             Author = new Person(data["personId"] as string);
 
-            // Message Content.
-            Text = data["text"] as string;
+            // Message Content (can be blank when uploading files).
+            object text;
+            if (data.TryGetValue("text", out text))
+            {
+                Text = text as string;
+            }
 
             object markdown;
             if (data.TryGetValue("markdown", out markdown))
