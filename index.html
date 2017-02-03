@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.13"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Cisco Spark Unity SDK: Cisco Spark SDK for Unity</title>
+<title>Cisco Spark Unity SDK: Cisco Spark SDK for Unity [![Build Status](https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK.svg?branch=master)](https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK)</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -59,7 +59,7 @@ $(function() {
 
 <div class="header">
   <div class="headertitle">
-<div class="title"><a class="el" href="namespace_cisco.html">Cisco</a> Spark SDK for Unity </div>  </div>
+<div class="title"><a class="el" href="namespace_cisco.html">Cisco</a> Spark SDK for Unity [![Build Status](<a href="https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK.svg?branch=master">https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK.svg?branch=master</a>)](<a href="https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK">https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK</a>) </div>  </div>
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>Native <a class="el" href="namespace_cisco.html">Cisco</a> Spark SDK for Unity 5.4+</p>
@@ -87,8 +87,8 @@ $(function() {
 <li>Import the scripts or UnityPackage.</li>
 <li>Place the <code><a class="el" href="namespace_cisco.html">Cisco</a> Spark Manager</code> prefab from Cisco/Spark/Prefabs into your scene.</li>
 <li>Set the <code>AuthenticationString</code> variable of the <code>Request</code> component in the Inspector.<ul>
-<li>Your <code>AuthenticationToken</code> or your bot's token can be found at <a href="http://developer.ciscospark.com">http://developer.ciscospark.com</a></li>
-<li>Support for integrations is coming</li>
+<li>Your token (or your bot's token) can be found at <a href="http://developer.ciscospark.com">http://developer.ciscospark.com</a></li>
+<li>Support for integrations/OAuth is coming!</li>
 </ul>
 </li>
 </ol>
@@ -104,7 +104,7 @@ $(function() {
 <h2>Examples</h2>
 <p>Here is an example of sending a <code>Message</code> to a given <code>Room</code> from Unity (without knowing the <code>RoomId</code> beforehand).</p>
 <div class="fragment"><div class="line">{c#}</div><div class="line">using UnityEngine;</div><div class="line">using Cisco.Spark;</div><div class="line"></div><div class="line">public class Spark : MonoBehaviour {</div><div class="line"></div><div class="line">    void SendMessageToTestRoom() {</div><div class="line">        // List all rooms you are a member of.</div><div class="line">        var listRooms = Room.ListRooms(error =&gt; {</div><div class="line">            // Error callback would fire here.</div><div class="line">            Debug.LogError(error.Message);</div><div class="line">        }, rooms =&gt; {</div><div class="line">            // Success! We now have all the rooms we&#39;re in.</div><div class="line">            foreach (var room in rooms) {</div><div class="line">                // Find the Test Room we want to post in.</div><div class="line">                if (room.Title == &quot;Test Room&quot;) {</div><div class="line">                    // Create our message.</div><div class="line">                    var testMessage = new Message(room);</div><div class="line">                    testMessage.Markdown = &quot;Hello from **Spark**&quot;;</div><div class="line"></div><div class="line">                    // Save our message to Spark!</div><div class="line">                    var saveMessage = testMessage.Commit(messageError =&gt; {</div><div class="line">                        Debug.LogError(messageError.Message);</div><div class="line">                    }, success =&gt; {</div><div class="line">                        Debug.Log(&quot;The message was saved to Spark successfully!&quot;);</div><div class="line">                    });</div><div class="line">                    StartCoroutine(saveMessage);</div><div class="line">                }</div><div class="line">            }</div><div class="line">        });</div><div class="line">        StartCoroutine(listRooms);</div><div class="line">    }</div><div class="line"></div><div class="line">    // When you know IDs, it&#39;s even easier!</div><div class="line">    void SendToBob() {</div><div class="line">        var bob = new Person(bobsId);</div><div class="line">        var message = new Message(bob);</div><div class="line">        message.Text = &quot;Hi Bob!&quot;;</div><div class="line">        StartCoroutine(message.Commit(error =&gt; {</div><div class="line">            Debug.LogError(&quot;Couldn&#39;t send message to Bob :( &quot; + error.Message);</div><div class="line">        }, success =&gt; {</div><div class="line">            Debug.Log(&quot;Sent to Bob :)&quot;);</div><div class="line">        }));</div><div class="line">    }</div><div class="line">}</div></div><!-- fragment --><h2>Tests</h2>
-<p>Unfortunately, there is a lack of support for running Asynchronous operations in the Unity Test Tools, and I still need to write proper unit tests for the non-async parts of the SDK. Instead, there are <code>MonoBehaviour</code> test scripts included that will run chains of requests. To run them, just attach any of the <code>Test*</code> scripts to a GameObject, and the results will be outputted to the console. Some of them require known and existing Person IDs to be added (as I can't generate Person objects without admin rights on a Spark instance.)</p>
+<p>Tests can be run by cloning from this repository (with <code>--recursive</code>) and opening the SparkIntegrationTests scene in Cisco/Spark/Tests. All tests can then be run using the Unity Integration Test Runner by selecting Integration Tests Runner from Unity Test Tools.</p>
 <p><b>Note: This will create/edit/destroy real test rooms/memberships/etc on the given Spark account, but they will clean up after themselves if possible.</b> </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
