@@ -1,33 +1,31 @@
 # Cisco Spark SDK for Unity [![Build Status](https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK.svg?branch=master)](https://travis-ci.org/RichLogan/CiscoSpark-UnitySDK)
+
 Native Cisco Spark SDK for Unity 5.4+
 
-You can follow the progress + development of this here: https://trello.com/b/BvpwAZYd/unity-spark-sdk
-
-Basic `TODO` list:
-- Better Testing
-- Cleanup
-- Additional objects (Orgs, Licenses etc.)
-- Pagination support
+An example starter project can be found here: https://github.com/RichLogan/CiscoSpark-UnityProject
 
 ## Docs
 
-Documentation can be found here: http://richlogan.co.uk/CiscoSpark-UnitySDK/ or [jump right into the code](http://richlogan.co.uk/CiscoSpark-UnitySDK/annotated.html).
+Documentation can be found here: http://richlogan.co.uk/CiscoSpark-UnitySDK/.
 
 ## About
 This library takes advantage of the new `UnityEngine.Networking.UnityWebRequest` functionality introduced in Unity 5.4. It talks to Spark through these web requests that run as coroutines to avoid blocking the main thread. Results are returned via `Action` callbacks.
 
-This SDK will always aim for parity with the web APIs at http://developer.ciscospark.com. 
+This SDK will always aim for parity with the web APIs at http://developer.ciscospark.com.
 
 It provides:
 
 - `Commit()` for creating or updating a record.
 - `Delete()` for deletion.
-- `Load()` for retrieve a record.
-- `ListObject()` for querying records.
+- `Load()` for populating an object with a Spark record.
+- Implementations of `ListObject()` for querying records.
 
 ## Setup
-1. Import the scripts or UnityPackage.
-2. Place the `Cisco Spark Manager` prefab from Cisco/Spark/Prefabs into your scene.
+1. Either:
+	- Import the UnityPackage from releases into your Unity project.
+	- OR: Clone this repository (or submodule) into your project's `Assets/` folder.
+	- OR: Clone the example project located here https://github.com/RichLogan/CiscoSpark-UnityProject
+2. Place the `Cisco Spark Manager` prefab from Spark/Prefabs into your scene.
 3. Set the `AuthenticationString` variable of the `Request` component in the Inspector.
     - Your token (or your bot's token) can be found at http://developer.ciscospark.com
     - Support for integrations/OAuth is coming!
@@ -106,6 +104,6 @@ public class Spark : MonoBehaviour {
 ```
 
 ## Tests
-Tests can be run by cloning from this repository (with `--recursive`) and opening the SparkIntegrationTests scene in Cisco/Spark/Tests. All tests can then be run using the Unity Integration Test Runner by selecting Integration Tests Runner from Unity Test Tools.
+Tests can be run by cloning from this repository (with `--recursive`) and opening the SparkIntegrationTests scene in Spark/Tests. All tests can then be run using the Unity Integration Test Runner by selecting Integration Tests Runner from Unity Test Tools.
 
 **Note: This will create/edit/destroy real test rooms/memberships/etc on the given Spark account, but they will clean up after themselves if possible.**
