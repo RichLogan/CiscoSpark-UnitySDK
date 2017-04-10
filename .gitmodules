@@ -1,8 +1,4 @@
-[submodule "SparkUnity/Assets/Cisco/Spark/Plugins/ObjLoader"]
-	branch = master
-	path = SparkUnity/Assets/Cisco/Spark/Plugins/ObjLoader
-	url = https://github.com/RichLogan/ObjLoader.git
-[submodule "Documentation"]
-	path = docs/html
-	url = https://github.com/RichLogan/CiscoSpark-UnitySDK.git
+[submodule ".docs/html"]
+	path = .docs/html
+	url = git@github.com:RichLogan/CiscoSpark-UnitySDK.git
 	branch = gh-pages
