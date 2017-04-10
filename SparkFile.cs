@@ -112,19 +112,6 @@ namespace Cisco.Spark
                         texture.LoadImage(Data);
                         callback(texture);
                     }
-                    else if (ReturnType == typeof(GameObject))
-                    {
-                        // File should return a GameObject.
-                        if (Extension.Equals("obj"))
-                        {
-                            // File is an Obj.
-                            var downloadedObject = new GameObject();
-                            var objImport = downloadedObject.AddComponent<ObjLoad>();
-                            var dataAsString = System.Text.Encoding.UTF8.GetString(Data);
-                            objImport.SetGeometryData(dataAsString);
-                            callback(downloadedObject);
-                        }
-                    }
                     else
                     {
                         // TODO: Support more file types.
