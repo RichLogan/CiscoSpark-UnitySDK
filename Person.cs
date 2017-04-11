@@ -79,11 +79,14 @@ namespace Cisco.Spark
         protected override Dictionary<string, object> ToDict(List<string> fields = null)
         {
             var data = base.ToDict();
-            // TODO: Add Person specific fields.
+            data["displayName"] = DisplayName;
+            data["nickName"] = NickName;
+            data["firstName"] = FirstName;
+            data["lastName"] = LastName;
+            data["avatar"] = Avatar.Uri.ToString();
+            data["emails"] = Emails;
             return CleanDict(data, fields);
         }
-
-        // TODO: List Rooms and List Teams?
 
         /// <summary>
         /// Populates an object with data received from Spark.
@@ -92,10 +95,30 @@ namespace Cisco.Spark
         protected override void LoadDict(Dictionary<string, object> data)
         {
             base.LoadDict(data);
-            DisplayName = data["displayName"] as string;
-            NickName = data["nickName"] as string;
-            FirstName = data["firstName"] as string;
-            LastName = data["lastName"] as string;
+
+            object displayName;
+            if (data.TryGetValue("displayName", out displayName))
+            {
+                DisplayName = displayName as string;
+            }
+
+            object nickName;
+            if (data.TryGetValue("nickName", out nickName))
+            {
+                NickName = nickName as string;
+            }
+
+            object firstName;
+            if (data.TryGetValue("firstName", out firstName))
+            {
+                FirstName = firstName as string;
+            }
+
+            object lastName;
+            if (data.TryGetValue("lastName", out lastName))
+            {
+                lastName = lastName as string;
+            }
 
             // Avatar.
             var avatarUri = new Uri(data["avatar"] as string);
@@ -107,7 +130,6 @@ namespace Cisco.Spark
             {
                 Emails.Add(obj as string);
             }
-            // TODO: Add Person specific fields.
         }
 
         /// <summary>
@@ -140,7 +162,7 @@ namespace Cisco.Spark
             // TODO: Admins are not bound by this rule.
             if (email == null && displayName == null)
             {
-                throw new Exception("One of Email or Display Name must be provided when listing People.");
+                throw new ArgumentException("One of Email or Display Name must be provided when listing People.");
             }
 
             var constraints = new Dictionary<string, string>();
