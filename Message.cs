@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Cisco.Spark
@@ -206,6 +207,59 @@ namespace Cisco.Spark
                 }
                 Mentions = tempPeople;
             }
+        }
+
+        /// <summary>
+        /// Lists all Message matching given criteria.
+        /// </summary>
+        /// <param name="room">The room to pull from.</param>
+        /// <param name="error">Error from Spark, if any.</param>
+        /// <param name="results">Callback for the list of messages.</param>
+        /// <param name="mentionedPeople">Will only return messages where these people are mentioned.</param>
+        /// <param name="before">Will only return messages sent before this DateTime.</param>
+        /// <param name="beforeMessage">Will only return messages from before this Message.</param>
+        /// <param name="max">Maximum number of messages to return.</param>
+        public static IEnumerator ListMessages(Room room, Action<SparkMessage> error, Action<List<Message>> results, List<Person> mentionedPeople = null, DateTime? before = null, Message beforeMessage = null, int max = 0)
+        {
+            // Room must exist on Spark.
+            if (room.Id == null)
+            {
+                throw new Exception("Must pass a valid Room to ListMessages");
+            }
+
+            // Search constraints.
+            var constraints = new Dictionary<string, string>();
+            constraints["roomId"] = room.Id;
+
+            if (mentionedPeople != null)
+            {
+                var serialisedString = new List<string>();
+                foreach (var person in mentionedPeople)
+                {
+                    serialisedString.Add(person.Id);
+                }
+                var queryString = MiniJSON.Json.Serialize(serialisedString);
+                constraints["mentionedPeople"] = queryString;
+            }
+
+            if (before != null)
+            {
+                constraints["before"] = before.ToString();
+            }
+
+            if (beforeMessage != null)
+            {
+                constraints["beforeMessage"] = beforeMessage.Id;
+            }
+
+            if (max > 0)
+            {
+                constraints["max"] = max.ToString();
+            }
+
+            // Make request.
+            var listObjects = ListObjects<Message>(constraints, SparkType.Message, error, results);
+            yield return Request.Instance.StartCoroutine(listObjects);
         }
     }
 }
