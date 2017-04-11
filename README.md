@@ -104,7 +104,26 @@ public class Spark : MonoBehaviour {
 }
 ```
 
-## Tests
-Tests can be run by cloning from this repository (with `--recursive`) and opening the SparkIntegrationTests scene in Spark/Tests. All tests can then be run using the Unity Integration Test Runner by selecting Integration Tests Runner from Unity Test Tools.
+One other thing to note is how the SDK creates objects as a result of most queries:
+  - Spark usually only returns IDs and metadata for any calls that are not a specific "GetDetails" call.
+  - For objects created by these "indirect" requests, you will need to call `Load()` on them.
+  - In the below example, listing messages in a Room will not populate the resultant message objects with the actual content (Text or Files) until you call `Load()`.
+  - Likewise, a Person object would be created for `message.Author`, but again you will have to call `Load()` on it to retrieve anything other than ID.
 
-**Note: This will create/edit/destroy real test rooms/memberships/etc on the given Spark account, but they will clean up after themselves if possible.**
+```c#
+StartCoroutine(someRoom.ListMessages(error => {}, results => {
+    // Prints null.
+    Debug.Log(results[0].Text);
+    foreach (var message in results) {
+        StartCoroutine(message.Load(error => {}, success => {
+            // Prints the message.
+            Debug.Log(message.Text);
+        }));
+    }
+}));
+```
+
+## Tests
+Tests can be run and opening the SparkIntegrationTests scene in Spark/Tests and setting your auth token in Request. All tests can then be run using the Unity Integration Test Runner by selecting Integration Tests Runner from the [Unity Test Tools](https://www.assetstore.unity3d.com/en/#!/content/13802)
+
+**Note: This will create/edit/destroy real test rooms/memberships/etc on the given Spark account, but they will clean up after themselves when possible.**
