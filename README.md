@@ -25,8 +25,9 @@ It provides:
 	- Import the UnityPackage from releases into your Unity project.
 	- OR: Clone this repository (or submodule) into your project's `Assets/` folder.
 	- OR: Clone the example project located here https://github.com/RichLogan/CiscoSpark-UnityProject
-2. Place the `Cisco Spark Manager` prefab from Spark/Prefabs into your scene.
-3. Set the `AuthenticationString` variable of the `Request` component in the Inspector.
+2. You will need the `MiniJSON.cs` script if you're not already using it. I don't include it as it will cause conflicts if you already use it. You can get it here: https://github.com/Jackyjjc/MiniJSON.cs/blob/master/MiniJSON.cs
+3. Place the `Cisco Spark Manager` prefab from Spark/Prefabs into your scene.
+4. Set the `AuthenticationString` variable of the `Request` component in the Inspector.
     - Your token (or your bot's token) can be found at http://developer.ciscospark.com
     - Support for integrations/OAuth is coming!
 
