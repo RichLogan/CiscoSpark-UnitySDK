@@ -34,6 +34,11 @@ namespace Cisco.Spark
         public bool SetupComplete { get; private set; }
 
         /// <summary>
+        /// We must declare this method in order for Unity to expose the enablement flag for this class in the inspector.
+        /// </summary>
+        private void Start(){}
+
+        /// <summary>
         /// Request setup should run as early as possible, in case requests are made on Start() elsewhere.
         /// </summary>
         void Awake()
@@ -55,6 +60,16 @@ namespace Cisco.Spark
                 SetupComplete = true;
                 Debug.Log("Cisco Spark SDK Ready! Authenticated as: " + Person.AuthenticatedUser.DisplayName);
             }));
+        }
+
+        public void SetAuthorizationToken( string newToken ){
+            if( newToken==null || newToken.Length==0 || newToken.Equals( AuthenticationToken ) )
+                return;
+
+            AuthenticationToken = newToken;
+
+            if( AuthenticationToken==null || AuthenticationToken.Length==0 )
+                throw new Exception( "AuthenticationToken MUST be set for Request setup" );
         }
 
         /// <summary>
