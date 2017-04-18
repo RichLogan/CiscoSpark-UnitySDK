@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System;
 using System.Collections.Generic;
-using MiniJSON;
 
 namespace Cisco.Spark
 {

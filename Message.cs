@@ -238,7 +238,7 @@ namespace Cisco.Spark
                 {
                     serialisedString.Add(person.Id);
                 }
-                var queryString = MiniJSON.Json.Serialize(serialisedString);
+                var queryString = Json.Serialize(serialisedString);
                 constraints["mentionedPeople"] = queryString;
             }
 
