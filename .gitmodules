@@ -1,4 +1,4 @@
 [submodule ".docs/html"]
 	path = .docs/html
-	url = git@github.com:RichLogan/CiscoSpark-UnitySDK.git
+	url = https://github.com/RichLogan/CiscoSpark-UnitySDK.git
 	branch = gh-pages
