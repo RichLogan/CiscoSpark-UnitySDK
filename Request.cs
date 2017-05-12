@@ -33,15 +33,14 @@ namespace Cisco.Spark
         /// </summary>
         public bool SetupComplete { get; private set; }
 
-        /// <summary>
-        /// We must declare this method in order for Unity to expose the enablement flag for this class in the inspector.
-        /// </summary>
-        private void Start(){}
+        void Start() {
+            Setup();
+        }
 
         /// <summary>
         /// Request setup should run as early as possible, in case requests are made on Start() elsewhere.
         /// </summary>
-        void Awake()
+        public void Setup()
         {
             if (AuthenticationToken == null || AuthenticationToken == "")
             {
