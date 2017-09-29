@@ -1,0 +1,66 @@
+{
+    "apiConstraints": {
+        "rooms": {
+            "create": [
+                "title",
+                "teamId"
+            ],
+            "update": [
+                "title"
+            ]
+        },
+        "memberships": {
+            "create": [
+                "roomId",
+                "personId",
+                "isModerator"
+            ],
+            "update": [
+                "isModerator"
+            ]
+        },
+        "messages": {
+            "create": [
+                "roomId",
+                "toPersonId",
+                "toPersonEmail",
+                "text",
+                "markdown",
+                "files"
+            ]
+        },
+        "teams": {
+            "create": [
+                "name"
+            ],
+            "update": [
+                "name"
+            ]
+        },
+        "team/memberships": {
+            "create": [
+                "teamId",
+                "personId",
+                "personEmail",
+                "isModerator"
+            ],
+            "update": [
+                "isModerator"
+            ]
+        },
+        "webhooks": {
+            "create": [
+                "name",
+                "targetUrl",
+                "resource",
+                "event",
+                "filter",
+                "secret"
+            ],
+            "update": [
+                "name",
+                "targetUrl"
+            ]
+        }
+    }
+}

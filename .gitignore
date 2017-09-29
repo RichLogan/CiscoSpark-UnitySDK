@@ -1,0 +1,6 @@
+.DS_Store
+.vscode/
+*.cs.meta
+*.md.meta
+Doxyfile.meta
+LICENSE.meta
