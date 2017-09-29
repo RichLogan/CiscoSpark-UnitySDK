@@ -26,7 +26,7 @@ It provides:
 	- OR: Clone this repository (or submodule) into your project's `Assets/` folder.
 	- OR: Clone the example project located here https://github.com/RichLogan/CiscoSpark-UnityProject
 2. You will need the `MiniJSON.cs` script if you're not already using it. I don't include it as it will cause conflicts if you already use it. You can get it here: https://github.com/Jackyjjc/MiniJSON.cs/blob/master/MiniJSON.cs
-3. Place the `Cisco Spark Manager` prefab from Spark/Prefabs into your scene.
+3. Place the `Request` and `SparkResources` scripts into your scene.
 4. Set the `AuthenticationString` variable of the `Request` component in the Inspector.
     - Your token (or your bot's token) can be found at http://developer.ciscospark.com
     - Support for integrations/OAuth is coming!
@@ -92,7 +92,7 @@ public class Spark : MonoBehaviour {
 
     // When you know IDs, it's even easier!
     void SendToBob() {
-        var bob = new Person(bobsId);
+        var bob = Person.FromId(bobsId);
         var message = new Message(bob);
         message.Text = "Hi Bob!";
         StartCoroutine(message.Commit(error => {
