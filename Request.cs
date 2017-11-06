@@ -9,6 +9,7 @@ namespace Cisco.Spark
     /// <summary>
     /// Handles building and making web requests to the Spark service.
     /// </summary>
+    [RequireComponent(typeof(SparkResources))]
     public class Request : MonoBehaviour
     {
         /// <summary>
@@ -197,11 +198,11 @@ namespace Cisco.Spark
         {
             using (var www = Generate(url, requestType, data))
             {
-                yield return www.Send();
-
 #if UNITY_5_4 || UNITY_5_5
+                yield return www.Send();
                 if (www.isError)
 #else
+                yield return www.SendWebRequest();
                 if (www.isNetworkError)
 #endif
                 {

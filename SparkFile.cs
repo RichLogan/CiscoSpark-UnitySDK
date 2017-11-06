@@ -80,10 +80,11 @@ namespace Cisco.Spark
             var manager = Request.Instance;
             using (UnityWebRequest www = manager.Generate("contents/" + Id, UnityWebRequest.kHttpVerbGET))
             {
-                yield return www.Send();
 #if UNITY_5_4 || UNITY_5_5
+                yield return www.Send();
                 if (www.isError)
 #else
+                yield return www.SendWebRequest();
                 if (www.isNetworkError)
 #endif
                 {
@@ -136,10 +137,11 @@ namespace Cisco.Spark
             var manager = Request.Instance;
             using (UnityWebRequest www = manager.Generate("contents/" + Id, UnityWebRequest.kHttpVerbHEAD))
             {
-                yield return www.Send();
 #if UNITY_5_4 || UNITY_5_5
+                yield return www.Send();
                 if (www.isError)
 #else
+                yield return www.SendWebRequest();
                 if (www.isNetworkError)
 #endif
                 {

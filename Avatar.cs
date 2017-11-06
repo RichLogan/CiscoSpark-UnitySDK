@@ -66,16 +66,14 @@ namespace Cisco.Spark
                 else
                 {
                     Locked = true;
-#if UNITY_5_4 || UNITY_5_5
-                    var www = UnityWebRequest.GetTexture(Uri.AbsoluteUri);
-#else
-                    var www = UnityWebRequestTexture.GetTexture(Uri.AbsoluteUri);
-#endif
-                    yield return www.Send();
 
 #if UNITY_5_4 || UNITY_5_5
+                    var www = UnityWebRequest.GetTexture(Uri.AbsoluteUri);
+                    yield return www.Send();
                     if (www.isError)
 #else
+                    var www = UnityWebRequestTexture.GetTexture(Uri.AbsoluteUri);
+                    yield return www.SendWebRequest();
                     if (www.isNetworkError)
 #endif
                     {
